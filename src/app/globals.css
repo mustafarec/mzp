@@ -153,6 +153,56 @@ html {
   .responsive-container {
     @apply w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
   }
+
+  /* PDF Flipbook Styling */
+  .catalog-flipbook {
+    @apply relative;
+  }
+
+  .catalog-flipbook .stf__parent {
+    @apply relative;
+  }
+
+  .catalog-flipbook .stf__block {
+    @apply shadow-2xl;
+  }
+
+  .catalog-flipbook .stf__item {
+    @apply bg-white border border-gray-200;
+  }
+
+  .catalog-flipbook .stf__item img {
+    @apply w-full h-full object-contain;
+  }
+
+  /* Flipbook page shadows and effects */
+  .catalog-flipbook .stf__block .stf__item {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  /* Flipbook animation improvements */
+  .catalog-flipbook .stf__block .stf__item.--folding {
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* React-PDF specific styling */
+  .react-pdf__Page {
+    @apply relative;
+  }
+
+  .react-pdf__Page__canvas {
+    @apply w-full h-auto;
+  }
+
+  .react-pdf__Page__textContent {
+    @apply hidden; /* Hide text layer for flipbook */
+  }
+
+  .react-pdf__Page__annotations {
+    @apply hidden; /* Hide annotations for flipbook */
+  }
 }
 
 @layer base {

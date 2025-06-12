@@ -6,11 +6,12 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, Mail, Star, Zap, Shield, Users, Leaf, Truck, Award, CheckCircle, Scissors, Flower, TreePine, Sprout, Bot, Lightbulb } from 'lucide-react';
+import { ArrowRight, Mail, Star, Zap, Shield, Users, Leaf, Truck, Award, CheckCircle, Scissors, Flower, TreePine, Sprout, Bot, Lightbulb, BookOpen, FileText } from 'lucide-react';
 import { collection, getDocs, query, where, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { getPremiumProducts } from '@/lib/actions/productActions';
-import type { Product, Category } from '@/types';
+import { getFeaturedCatalogs } from '@/lib/actions/catalogActions';
+import type { Product, Category, Catalog } from '@/types';
 
 interface AppleScrollProps {
   children: React.ReactNode;
@@ -53,13 +54,15 @@ function AppleScrollSection({ children, className = '' }: AppleScrollProps) {
 export default function HomePage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [catalogs, setCatalogs] = useState<Catalog[]>([]);
 
   useEffect(() => {
     async function loadData() {
       try {
-        const [premiumProducts, categoriesSnapshot] = await Promise.all([
+        const [premiumProducts, categoriesSnapshot, featuredCatalogs] = await Promise.all([
           getPremiumProducts(),
-          getDocs(query(collection(db, 'categories'), where('isActive', '==', true), limit(4)))
+          getDocs(query(collection(db, 'categories'), where('isActive', '==', true), limit(4))),
+          getFeaturedCatalogs(4)
         ]);
 
         const categoriesList = categoriesSnapshot.docs.map(doc => ({
@@ -71,8 +74,13 @@ export default function HomePage() {
 
         setProducts(premiumProducts);
         setCategories(categoriesList);
+        setCatalogs(featuredCatalogs || []);
       } catch (error) {
         console.error('Data loading error:', error);
+        // Set empty arrays on error to prevent crashes
+        setProducts([]);
+        setCategories([]);
+        setCatalogs([]);
       }
     }
 
@@ -276,6 +284,103 @@ export default function HomePage() {
                 </Link>
               </Button>
             </div>
+          </div>
+        </section>
+      </AppleScrollSection>
+
+      {/* Catalogs Section */}
+      <AppleScrollSection>
+        <section className="py-20 sm:py-24 md:py-32 bg-gray-50">
+          <div className="container mx-auto px-4">
+            <div className="text-center mb-12 md:mb-20">
+              <Badge className="mb-6 bg-blue-100 text-blue-700 hover:bg-blue-200">
+                Marka Katalogları
+              </Badge>
+              <h2 className="apple-hero-text text-gray-900 mb-6">
+                Dijital <span className="text-blue-600">Kataloglar</span>
+              </h2>
+              <p className="apple-hero-subtext text-gray-600 max-w-3xl mx-auto mb-12">
+                Öncü markaların en güncel ürün kataloglarını dijital flipbook formatında inceleyin.
+              </p>
+            </div>
+
+            {catalogs.length > 0 ? (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                  {catalogs.map((catalog) => (
+                    <Link
+                      href={`/catalogs/${catalog.slug}`}
+                      key={catalog.id}
+                      className="group block"
+                    >
+                      <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden apple-card-hover">
+                        {/* Thumbnail */}
+                        <div className="relative aspect-[3/4] bg-gray-100 overflow-hidden">
+                          {catalog.thumbnailUrl ? (
+                            <Image
+                              src={catalog.thumbnailUrl}
+                              alt={catalog.title}
+                              fill
+                              className="object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                          ) : (
+                            <div className="flex items-center justify-center h-full">
+                              <FileText className="h-16 w-16 text-gray-400" />
+                            </div>
+                          )}
+                          
+                          {/* Brand Badge */}
+                          <div className="absolute top-3 left-3">
+                            <Badge variant="secondary" className="bg-white/90 backdrop-blur-sm text-xs">
+                              {catalog.brand}
+                            </Badge>
+                          </div>
+                        </div>
+
+                        {/* Content */}
+                        <div className="p-4">
+                          <h3 className="text-lg font-semibold text-gray-800 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">
+                            {catalog.title}
+                          </h3>
+                          <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                            {catalog.description || 'Ürün katalogunu inceleyin'}
+                          </p>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center text-xs text-gray-500">
+                              <BookOpen className="h-4 w-4 mr-1" />
+                              {catalog.pageCount ? `${catalog.pageCount} sayfa` : 'PDF Katalog'}
+                            </div>
+                            <div className="flex items-center text-blue-600 text-sm font-medium group-hover:translate-x-1 transition-transform">
+                              Görüntüle
+                              <ArrowRight className="h-4 w-4 ml-1" />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+
+                <div className="text-center">
+                  <Button 
+                    size="lg"
+                    variant="outline"
+                    className="apple-button border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"
+                    asChild
+                  >
+                    <Link href="/catalogs">
+                      Tüm Katalogları Gör <ArrowRight className="ml-2 h-5 w-5" />
+                    </Link>
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-12">
+                <BookOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-gray-600 mb-2">Yakında Kataloglar</h3>
+                <p className="text-gray-500">Marka katalogları çok yakında burada olacak.</p>
+              </div>
+            )}
           </div>
         </section>
       </AppleScrollSection>

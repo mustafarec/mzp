@@ -43,6 +43,41 @@ const nextConfig: NextConfig = {
       bodySizeLimit: '50mb',
     },
   },
+  webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
+    // PDF.js canvas module resolution
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      canvas: false,
+    };
+    
+    // Handle PDF files
+    config.module.rules.push({
+      test: /\.pdf$/,
+      type: 'asset/resource',
+    });
+
+    // PDF.js specific configuration for client-side
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        canvas: false,
+        fs: false,
+        path: false,
+        stream: false,
+        crypto: false,
+      };
+    }
+
+    return config;
+  },
+  async rewrites() {
+    return [
+      {
+        source: '/api/pdf-proxy',
+        destination: 'https://firebasestorage.googleapis.com/v0/b/ziraatx.firebasestorage.app/:path*',
+      },
+    ];
+  },
 };
 
 export default nextConfig;

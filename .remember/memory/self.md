@@ -1,5 +1,53 @@
 # Marmara Ziraat Proje Hafızası
 
+## PDF Flipbook Navigation Düzeltmesi (2025-01-27)
+
+### Sorun: "Sonraki" Butonu Çalışmıyor
+**Hata**: PDF flipbook'ta "Sonraki" (nextPage) butonu tıklandığında sayfa değişmiyor
+**Sebep**: 
+1. react-pageflip kütüphanesinde API yöntemleri doğru çağrılmıyor
+2. onInit ve onFlip callback'lerinde event objesi yapısı yanlış
+3. totalPages değeri düzgün set edilemiyor
+
+**Çözüm**:
+```javascript
+// Önceki kod:
+book.current?.pageFlip()?.flipNext();
+onInit={(e: any) => setTotalPages(e.pages)}
+
+// Düzeltilmiş kod:
+if (book.current?.getPageFlip) {
+  book.current.getPageFlip().flipNext();
+} else if (book.current?.flipNext) {
+  book.current.flipNext();
+} else if (book.current?.pageFlip) {
+  book.current.pageFlip().flipNext();
+}
+
+onInit={(e: any) => {
+  const pageCount = e?.object?.getPageCount?.() || pages.length || 0;
+  setTotalPages(pageCount);
+}}
+```
+
+**React Object Render Hatası**:
+- **Hata**: "Objects are not valid as a React child" - HTMLFlipBook event objekti JSX'te render edilmeye çalışılıyor
+- **Çözüm**: Event handler'larda sadece primitive değerleri state'e set etme
+```javascript
+// Yanlış:
+setCurrentPage(e.data || 0);  // e.data object olabilir
+
+// Doğru:
+const pageNum = typeof e?.data === 'number' ? e.data : 0;
+setCurrentPage(pageNum);
+```
+
+**Ek İyileştirmeler**:
+- Fallback mekanizması: API çağrısı başarısız olursa manual state update
+- Console.log eklendi debugging için
+- Error handling geliştirildi
+- Type checking eklendi primitive değerler için
+
 ## Düzeltilen UI/UX Sorunları (2025-01-27)
 
 ### Ana Sayfa Düzeltmeleri

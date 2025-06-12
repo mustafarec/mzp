@@ -180,3 +180,35 @@ export interface PageWidget {
   order: number;
   settings: Record<string, any>;
 }
+
+export interface Catalog {
+  id: string;
+  title: string;
+  brand: string;
+  description?: string;
+  slug: string;
+  pdfUrl: string;
+  thumbnailUrl?: string;
+  fileSize: number; // KB cinsinden
+  pageCount?: number;
+  isActive: boolean;
+  sortOrder: number;
+  category?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Zod schema for adding/editing catalogs
+export const AddCatalogFormSchema = z.object({
+  title: z.string().min(3, "Katalog başlığı en az 3 karakter olmalıdır."),
+  brand: z.string().min(2, "Marka adı en az 2 karakter olmalıdır."),
+  slug: z.string()
+    .min(3, "Slug en az 3 karakter olmalıdır.")
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug sadece küçük harf, rakam ve tire içerebilir."),
+  description: z.string().optional().default(''),
+  category: z.string().optional().default(''),
+  isActive: z.boolean().default(true),
+  sortOrder: z.coerce.number().int("Sıralama tam sayı olmalıdır.").default(0),
+});
+
+export type AddCatalogFormData = z.infer<typeof AddCatalogFormSchema>;
