@@ -32,7 +32,9 @@ export default function RootLayout({
       <body className="font-body antialiased flex flex-col min-h-screen">
         <Header />
         <main className="flex-grow">
-          {children}
+          <div className="min-h-full">
+            {children}
+          </div>
         </main>
         <Footer />
         <ConditionalAIChat />

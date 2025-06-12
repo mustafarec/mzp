@@ -28,7 +28,10 @@ function AppleScrollSection({ children, className = '' }: AppleScrollProps) {
           setIsInView(true);
         }
       },
-      { threshold: 0.3 }
+      { 
+        threshold: 0.1, // Reduced from 0.3 to 0.1 for better mobile performance
+        rootMargin: '50px' // Trigger animation earlier
+      }
     );
 
     const element = document.getElementById(id);
