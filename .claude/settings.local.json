@@ -10,7 +10,10 @@
       "Bash(find:*)",
       "Bash(ls:*)",
       "Bash(npm run lint)",
-      "mcp__context7__resolve-library-id"
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__get-library-docs",
+      "Bash(git add:*)",
+      "Bash(git push:*)"
     ],
     "deny": []
   }

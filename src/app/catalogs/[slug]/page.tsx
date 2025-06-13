@@ -192,7 +192,7 @@ export default function CatalogDetailPage() {
       <div className="container mx-auto px-4 py-4">
         <div className="grid gap-4 lg:grid-cols-4">
           {/* PDF Viewer */}
-          <div className="lg:col-span-3 order-2 lg:order-1">
+          <div className="lg:col-span-3 order-1 lg:order-1">
             <Card className="overflow-visible">
               <CardContent className="p-0">
                 <ResponsivePDFViewer
@@ -205,7 +205,7 @@ export default function CatalogDetailPage() {
           </div>
 
           {/* Sidebar */}
-          <div className="lg:col-span-1 order-1 lg:order-2">
+          <div className="lg:col-span-1 order-2 lg:order-2">
             <div className="space-y-4">
               {/* Catalog Info */}
               <Card>

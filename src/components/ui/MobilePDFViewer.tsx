@@ -179,31 +179,71 @@ const MobilePDFViewer: React.FC<MobilePDFViewerProps> = ({
 
   // Touch gesture handlers for mobile
   const handleTouchStart = useRef<{ x: number; y: number } | null>(null);
+  const initialPinchDistance = useRef<number>(0);
+  const lastPinchScale = useRef<number>(1);
+  
+  // Calculate distance between two touch points
+  const getTouchDistance = (touch1: React.Touch, touch2: React.Touch) => {
+    const dx = touch1.clientX - touch2.clientX;
+    const dy = touch1.clientY - touch2.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
   
   const onTouchStart = (e: React.TouchEvent) => {
-    const touch = e.touches[0];
-    handleTouchStart.current = { x: touch.clientX, y: touch.clientY };
+    if (e.touches.length === 1) {
+      // Single touch - for swipe gestures
+      const touch = e.touches[0];
+      handleTouchStart.current = { x: touch.clientX, y: touch.clientY };
+    } else if (e.touches.length === 2) {
+      // Two touches - for pinch-to-zoom
+      e.preventDefault();
+      const distance = getTouchDistance(e.touches[0], e.touches[1]);
+      initialPinchDistance.current = distance;
+      lastPinchScale.current = scale;
+      handleTouchStart.current = null; // Disable swipe when pinching
+    }
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      // Handle pinch-to-zoom
+      e.preventDefault();
+      const currentDistance = getTouchDistance(e.touches[0], e.touches[1]);
+      
+      if (initialPinchDistance.current > 0) {
+        const scaleChange = currentDistance / initialPinchDistance.current;
+        const newScale = Math.max(0.5, Math.min(3, lastPinchScale.current * scaleChange));
+        setScale(newScale);
+      }
+    }
   };
 
   const onTouchEnd = (e: React.TouchEvent) => {
-    if (!handleTouchStart.current) return;
-    
-    const touch = e.changedTouches[0];
-    const deltaX = touch.clientX - handleTouchStart.current.x;
-    const deltaY = touch.clientY - handleTouchStart.current.y;
-    
-    // Horizontal swipe detection (threshold: 50px)
-    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
-      if (deltaX > 0) {
-        // Swipe right - previous page
-        goToPrevPage();
-      } else {
-        // Swipe left - next page
-        goToNextPage();
+    if (e.touches.length === 0) {
+      // All touches ended
+      if (handleTouchStart.current) {
+        // Single touch ended - check for swipe
+        const touch = e.changedTouches[0];
+        const deltaX = touch.clientX - handleTouchStart.current.x;
+        const deltaY = touch.clientY - handleTouchStart.current.y;
+        
+        // Horizontal swipe detection (threshold: 50px)
+        if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
+          e.preventDefault();
+          if (deltaX > 0) {
+            // Swipe right - previous page
+            goToPrevPage();
+          } else {
+            // Swipe left - next page
+            goToNextPage();
+          }
+        }
       }
+      
+      // Reset touch state
+      handleTouchStart.current = null;
+      initialPinchDistance.current = 0;
     }
-    
-    handleTouchStart.current = null;
   };
 
   if (error) {
@@ -304,8 +344,8 @@ const MobilePDFViewer: React.FC<MobilePDFViewerProps> = ({
         </div>
       )}
 
-      {/* Zoom Controls - Fixed position */}
-      {!loading && (
+      {/* Zoom Controls - Fixed position (Desktop only) */}
+      {!loading && !isMobile && (
         <div className="zoom-controls absolute top-16 right-4 z-20 flex flex-col gap-1 bg-white/90 backdrop-blur-sm rounded-lg shadow p-2">
           <Button
             variant="ghost"
@@ -341,6 +381,13 @@ const MobilePDFViewer: React.FC<MobilePDFViewerProps> = ({
           </div>
         </div>
       )}
+      
+      {/* Mobile Zoom Indicator */}
+      {!loading && isMobile && scale !== 1 && (
+        <div className="absolute top-16 right-4 z-20 bg-black/60 text-white text-xs px-2 py-1 rounded backdrop-blur-sm">
+          {Math.round(scale * 100)}%
+        </div>
+      )}
 
       {/* PDF Document */}
       <div 
@@ -350,6 +397,7 @@ const MobilePDFViewer: React.FC<MobilePDFViewerProps> = ({
           isFullscreen ? 'p-8 min-h-screen bg-black' : 'p-4 min-h-[500px]'
         )}
         onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
       >
         <Document
