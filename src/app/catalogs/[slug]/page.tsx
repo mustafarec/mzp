@@ -18,7 +18,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { getCatalogBySlug } from '@/lib/actions/catalogActions';
-import PDFFlipBook from '@/components/ui/PDFFlipbook';
+import ResponsivePDFViewer from '@/components/ui/ResponsivePDFViewer';
 import type { Catalog } from '@/types';
 
 export default function CatalogDetailPage() {
@@ -195,10 +195,9 @@ export default function CatalogDetailPage() {
           <div className="lg:col-span-3 order-2 lg:order-1">
             <Card className="overflow-visible">
               <CardContent className="p-0">
-                <PDFFlipBook
+                <ResponsivePDFViewer
                   pdfUrl={catalog.pdfUrl}
                   title={catalog.title}
-                  className="h-[calc(100vh-200px)] min-h-[500px] w-full"
                   onPageCountChange={setCurrentPageCount}
                 />
               </CardContent>

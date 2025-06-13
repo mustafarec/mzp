@@ -203,6 +203,61 @@ html {
   .react-pdf__Page__annotations {
     @apply hidden; /* Hide annotations for flipbook */
   }
+
+  /* Mobile PDF Viewer specific styling */
+  .mobile-pdf-viewer .react-pdf__Page {
+    @apply mb-4 shadow-lg rounded-lg overflow-hidden;
+  }
+
+  .mobile-pdf-viewer .react-pdf__Page__canvas {
+    @apply w-full h-auto block;
+  }
+
+  .mobile-pdf-viewer .react-pdf__Page__textContent {
+    @apply block; /* Show text layer for mobile viewer */
+  }
+
+  .mobile-pdf-viewer .react-pdf__Page__annotations {
+    @apply block; /* Show annotations for mobile viewer */
+  }
+
+  /* PDF container improvements */
+  .pdf-container {
+    @apply relative overflow-auto;
+  }
+
+  .pdf-container::-webkit-scrollbar {
+    @apply w-2;
+  }
+
+  .pdf-container::-webkit-scrollbar-track {
+    @apply bg-gray-100 rounded-full;
+  }
+
+  .pdf-container::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 rounded-full hover:bg-gray-400;
+  }
+
+  /* Touch-friendly controls */
+  .touch-control {
+    @apply min-h-[44px] min-w-[44px] flex items-center justify-center;
+  }
+
+  /* Responsive zoom controls */
+  @media (max-width: 768px) {
+    .zoom-controls {
+      @apply scale-110; /* Make controls slightly larger on mobile */
+    }
+  }
+
+  /* Prevent text selection on touch devices during gestures */
+  .no-select {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
 }
 
 @layer base {
