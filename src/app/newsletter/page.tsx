@@ -3,7 +3,7 @@ import { Newspaper } from "lucide-react";
 
 export default function NewsletterPage() {
   return (
-    <div className="container mx-auto py-12 md:py-16">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
       <div className="max-w-2xl mx-auto text-center">
         <Newspaper className="h-16 w-16 mx-auto mb-6 text-primary" />
         <h1 className="text-4xl md:text-5xl font-bold text-primary mb-6">E-Bültenimize Kaydolun</h1>
