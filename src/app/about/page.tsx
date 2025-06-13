@@ -7,13 +7,13 @@ export default function AboutPage() {
   const features = [
     {
       icon: Leaf,
-      title: "15+ Yıllık Deneyim",
-      description: "Bahçe ürünleri sektöründe uzun yıllara dayanan deneyimimizle hizmet veriyoruz."
+      title: "25+ Yıllık Deneyim",
+      description: "Bahçe ürünleri sektöründe çeyrek asırlık deneyimimizle hizmet veriyoruz."
     },
     {
       icon: Users,
-      title: "5000+ Mutlu Müşteri",
-      description: "Binlerce müşterinin güvenini kazanmış, kaliteli ürün ve hizmet anlayışımız."
+      title: "50.000+ Mutlu Müşteri",
+      description: "On binlerce müşterinin güvenini kazanmış, kaliteli ürün ve hizmet anlayışımız."
     },
     {
       icon: Award,
@@ -35,17 +35,17 @@ export default function AboutPage() {
     {
       name: "M. Nuri Özçakal",
       role: "Kurucu & Genel Müdür",
-      description: "Ziraat mühendisi, 20+ yıllık sektör deneyimi"
+      description: "Ziraat mühendisi, 25+ yıllık sektör deneyimi"
     },
     {
       name: "Yusuf Özçakal", 
       role: "Satış Müdürü",
-      description: "Müşteri ilişkileri uzmanı, 10+ yıllık deneyim"
+      description: "Müşteri ilişkileri uzmanı, 15+ yıllık deneyim"
     },
     {
       name: "Ömer Özçakal",
       role: "Danışman",
-      description: "Bahçe ürünleri ve peyzaj danışmanı"
+      description: "Bahçe ürünleri ve peyzaj danışmanı, 10+ yıllık deneyim"
     }
   ];
 
@@ -60,7 +60,7 @@ export default function AboutPage() {
           Marmara <span className="text-agriculture-accent">Ziraat</span>
         </h1>
         <p className="apple-hero-subtext text-agriculture-600 max-w-4xl mx-auto">
-          İstanbul'da bahçe ürünleri sektöründe 15 yıllık deneyimimizle, 
+          İstanbul'da bahçe ürünleri sektöründe 25+ yıllık deneyimimizle, 
           çim tohumu, gübre, bahçe makineleri ve peyzaj malzemeleri konusunda 
           güvenilir çözümler sunuyoruz.
         </p>
@@ -111,8 +111,8 @@ export default function AboutPage() {
           </h2>
           <div className="space-y-4 font-body text-agriculture-600 leading-relaxed">
             <p>
-              2008 yılında bahçe severlere kaliteli ürün sunma vizyonuyla kurulan Marmara Ziraat, 
-              İstanbul Başakşehir'de hizmet veren güvenilir bir bahçe ürünleri merkezidir.
+              1998 yılından bu yana bahçe severlere kaliteli ürün sunma vizyonuyla hizmet veren Marmara Ziraat, 
+              İstanbul Başakşehir'de güvenilir bir bahçe ürünleri merkezi olarak faaliyet göstermektedir.
             </p>
             <p>
               Çim tohumu ve gübrelerinden bahçe makinelerine, bitki hastalık ilaçlarından 
