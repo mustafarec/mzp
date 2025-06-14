@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { MessageCircle, X, Send, Bot, User, Minimize2, ExternalLink } from 'lucide-react';
+import { MoreHorizontal, X, Send, Bot, User, Expand, Image as ImageIcon, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import type { Product } from '@/types';
 
@@ -15,6 +15,7 @@ interface Message {
   sender: 'user' | 'ai';
   timestamp: Date;
   products?: Product[];
+  imageUrl?: string;
 }
 
 const SYSTEM_PROMPT = `Sen Marmara Ziraat şirketinin uzman bahçe danışmanısın. Bu şirket:
@@ -36,6 +37,9 @@ Görevin:
 export default function FloatingAIChat() {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -85,35 +89,70 @@ export default function FloatingAIChat() {
     setIsOpen(false);
   };
 
-  const handleMinimize = () => {
-    setIsMinimized(!isMinimized);
+  const handleExpand = () => {
+    setIsExpanded(!isExpanded);
+  };
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      setSelectedImage(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
   };
 
   const sendMessage = async () => {
-    if (!inputValue.trim()) return;
+    if (!inputValue.trim() && !selectedImage) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
-      content: inputValue,
+      content: inputValue || (selectedImage ? "Resim hakkında sorum var" : ""),
       sender: 'user',
-      timestamp: new Date()
+      timestamp: new Date(),
+      imageUrl: imagePreview || undefined
     };
 
     setMessages(prev => [...prev, userMessage]);
     const question = inputValue;
+    const imageToSend = selectedImage;
+    const imagePreviewToSend = imagePreview;
+    
     setInputValue('');
+    setSelectedImage(null);
+    setImagePreview(null);
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/ai-chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      let body;
+      let headers: Record<string, string> = {};
+
+      if (imageToSend) {
+        const formData = new FormData();
+        formData.append('message', question);
+        formData.append('image', imageToSend);
+        formData.append('history', JSON.stringify(messages.slice(-10)));
+        body = formData;
+      } else {
+        headers['Content-Type'] = 'application/json';
+        body = JSON.stringify({
           message: question,
           history: messages.slice(-10)
-        }),
+        });
+      }
+
+      const response = await fetch('/api/ai-chat', {
+        method: 'POST',
+        headers,
+        body,
       });
 
       if (!response.ok) {
@@ -161,10 +200,7 @@ export default function FloatingAIChat() {
           data-chat-button
           className="h-16 w-16 bg-green-600 hover:bg-green-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center relative group"
         >
-          <MessageCircle className="h-8 w-8" />
-          <Badge className="absolute -top-1 -right-1 bg-green-500 text-white px-2 py-1 text-xs">
-            🌱
-          </Badge>
+          <MoreHorizontal className="h-8 w-8" />
           <div className="absolute right-20 top-1/2 transform -translate-y-1/2 bg-green-700 text-white px-3 py-2 rounded-lg text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
             Bahçe Danışmanı
             <div className="absolute left-full top-1/2 transform -translate-y-1/2 border-4 border-transparent border-l-green-700"></div>
@@ -175,7 +211,9 @@ export default function FloatingAIChat() {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 w-96 max-w-[calc(100vw-2rem)]">
+    <div className={`fixed bottom-6 right-6 z-50 max-w-[calc(100vw-2rem)] transition-all duration-300 ${
+      isExpanded ? 'w-[27.6rem]' : 'w-96'
+    }`}>
       <Card className="shadow-2xl border-0 bg-white/95 backdrop-blur">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
@@ -193,10 +231,11 @@ export default function FloatingAIChat() {
             </div>
             <div className="flex items-center space-x-1">
               <button
-                onClick={handleMinimize}
+                onClick={handleExpand}
                 className="h-8 w-8 p-0 hover:bg-gray-100 rounded flex items-center justify-center"
+                title={isExpanded ? "Küçült" : "Büyüt"}
               >
-                <Minimize2 className="h-4 w-4" />
+                <Expand className="h-4 w-4" />
               </button>
               <button
                 onClick={handleCloseChat}
@@ -238,7 +277,22 @@ export default function FloatingAIChat() {
                         : 'bg-white border shadow-sm'
                     }`}>
                       {message.sender === 'user' ? (
-                        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                        <div>
+                          {message.imageUrl && (
+                            <div className="mb-2">
+                              <img
+                                src={message.imageUrl}
+                                alt="Gönderilen resim"
+                                className="max-w-[200px] max-h-[150px] object-cover rounded border"
+                                onError={(e) => {
+                                  const target = e.currentTarget;
+                                  target.style.display = 'none';
+                                }}
+                              />
+                            </div>
+                          )}
+                          <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                        </div>
                       ) : (
                         <div 
                           className="text-sm prose prose-sm prose-green max-w-none [&_strong]:font-semibold [&_em]:italic [&_ul]:my-2 [&_li]:my-1"
@@ -328,22 +382,59 @@ export default function FloatingAIChat() {
             </div>
 
             <div className="p-4 border-t bg-white">
+              {/* Image Preview */}
+              {imagePreview && (
+                <div className="mb-3 relative inline-block">
+                  <img 
+                    src={imagePreview} 
+                    alt="Yüklenen resim" 
+                    className="max-w-[150px] max-h-[150px] rounded-lg border"
+                  />
+                  <button
+                    onClick={removeImage}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              )}
+              
               <div className="flex space-x-2">
-                <Textarea
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Bahçe sorununuzu detaylı anlatın... (Örn: Çimlerimde sarı lekeler var, ne yapmalıyım?)"
-                  className="flex-1 min-h-[40px] max-h-[120px] resize-none"
-                  disabled={isLoading}
-                />
-                <button
-                  onClick={sendMessage}
-                  disabled={!inputValue.trim() || isLoading}
-                  className="bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white p-2 rounded self-end"
-                >
-                  <Send className="h-4 w-4" />
-                </button>
+                <div className="flex-1 space-y-2">
+                  <Textarea
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="Bahçe sorununuzu detaylı anlatın... (Örn: Çimlerimde sarı lekeler var, ne yapmalıyım?)"
+                    className="w-full min-h-[40px] max-h-[120px] resize-none"
+                    disabled={isLoading}
+                  />
+                </div>
+                
+                <div className="flex flex-col space-y-1 self-end">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageSelect}
+                    className="hidden"
+                    id="image-upload"
+                    disabled={isLoading}
+                  />
+                  <label
+                    htmlFor="image-upload"
+                    className="bg-gray-100 hover:bg-gray-200 disabled:bg-gray-300 text-gray-600 p-2 rounded cursor-pointer flex items-center justify-center"
+                  >
+                    <ImageIcon className="h-4 w-4" />
+                  </label>
+                  
+                  <button
+                    onClick={sendMessage}
+                    disabled={(!inputValue.trim() && !selectedImage) || isLoading}
+                    className="bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white p-2 rounded"
+                  >
+                    <Send className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
               <p className="text-xs text-muted-foreground mt-2 text-center">
                 🌱 AI Bahçe Danışmanı • Uzman Öneriler • Ürün Tavsiyeleri

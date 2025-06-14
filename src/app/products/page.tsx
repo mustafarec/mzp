@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, Filter, Grid, List, Package } from 'lucide-react';
+import Carousel from '@/components/ui/Carousel';
+import DynamicSlider from '@/components/ui/DynamicSlider';
 import { getAllProducts } from '@/lib/actions/productActions';
 import { getAllCategories } from '@/lib/actions/categoryActions';
 import type { Product, Category } from '@/types';
@@ -72,6 +74,7 @@ export default function ProductsPage() {
     return filtered;
   }, [products, searchTerm, selectedCategory, sortBy]);
 
+
   const getCategoryName = (categoryId: string) => {
     const category = categories.find(cat => cat.id === categoryId);
     return category?.name || 'Kategori';
@@ -94,6 +97,15 @@ export default function ProductsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Dynamic Slider */}
+      <DynamicSlider 
+        position="products-top"
+        showTitle={true}
+        className="mb-12"
+        fallback={null}
+      />
+      
+
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Tüm Ürünler</h1>
         <p className="text-muted-foreground">

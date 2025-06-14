@@ -18,9 +18,10 @@ export function useAdmin() {
       const emails = snapshot.docs.map(doc => doc.data().email);
       setAdminEmails(emails);
       setAdminLoading(false);
-      console.log('Admin emails from Firebase:', emails);
+      console.log('🔍 Admin emails from Firebase:', emails);
+      console.log('📊 Total admin count:', emails.length);
     }, (error) => {
-      console.error('Admin emails fetch error:', error);
+      console.error('❌ Admin emails fetch error:', error);
       setAdminLoading(false);
     });
 
@@ -32,13 +33,24 @@ export function useAdmin() {
     if (user?.email && !adminLoading) {
       const isUserAdmin = adminEmails.includes(user.email);
       setIsAdmin(isUserAdmin);
-      console.log('User admin check:', {
+      console.log('🔐 User admin check:', {
         userEmail: user.email,
         adminEmails,
-        isAdmin: isUserAdmin
+        isAdmin: isUserAdmin,
+        adminEmailsCount: adminEmails.length,
+        adminLoadingComplete: !adminLoading
       });
+      
+      if (!isUserAdmin && adminEmails.length > 0) {
+        console.warn('⚠️ User is not admin! Email not found in admin list.');
+      }
     } else {
       setIsAdmin(false);
+      console.log('🔄 Admin check skipped:', {
+        hasUser: !!user?.email,
+        adminLoading,
+        userEmail: user?.email || 'none'
+      });
     }
   }, [user?.email, adminEmails, adminLoading]);
 

@@ -18,31 +18,39 @@ const Footer = () => {
               />
               <span className="font-bold font-headline text-2xl">Marmara Ziraat</span>
             </Link>
+            <p className="text-sm text-muted-foreground leading-relaxed max-w-sm">
+              25+ yıllık deneyimle bahçe ürünleri ve peyzaj çözümleri. 
+              Çim tohumu, gübre, bahçe makineleri ve danışmanlık hizmetleri.
+            </p>
           </div>
           <div>
             <h3 className="font-semibold mb-4 font-headline">Hızlı Bağlantılar</h3>
             <ul className="space-y-2 text-sm">
-              <li><Link href="/#products" className="text-muted-foreground hover:text-primary transition-colors">Ürünler</Link></li>
-              <li><Link href="/about" className="text-muted-foreground hover:text-primary transition-colors">Hakkımızda</Link></li>
-              <li><Link href="/contact" className="text-muted-foreground hover:text-primary transition-colors">İletişim</Link></li>
-              <li><Link href="/newsletter" className="text-muted-foreground hover:text-primary transition-colors">Bülten Kayıt</Link></li>
+              <li><Link href="/products" className="text-muted-foreground hover:text-green-600 transition-colors">Ürünler</Link></li>
+              <li><Link href="/about" className="text-muted-foreground hover:text-green-600 transition-colors">Hakkımızda</Link></li>
+              <li><Link href="/contact" className="text-muted-foreground hover:text-green-600 transition-colors">İletişim</Link></li>
+              <li><Link href="/newsletter" className="text-muted-foreground hover:text-green-600 transition-colors">Bülten Kayıt</Link></li>
             </ul>
           </div>
           <div>
             <h3 className="font-semibold mb-4 font-headline">İletişim</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li className="break-words">Email: info@marmaraziraat.com</li>
-              <li>Telefon: (0212) 672 99 56</li>
+              <li className="break-words">
+                Email: <a href="mailto:info@marmaraziraat.com" className="hover:text-green-600 transition-colors">info@marmaraziraat.com</a>
+              </li>
+              <li>
+                Telefon: <a href="tel:+902126729956" className="hover:text-green-600 transition-colors">(0212) 672 99 56</a>
+              </li>
               <li className="break-words">Adres: Bahçeşehir, Hoşdere-Bahçeşehir Yolu No:66, 34488 Başakşehir/İstanbul</li>
-              <li>Çalışma Saatleri: 09:00 - 17:00</li>
+              <li>Çalışma Saatleri: Hafta içi & Cumartesi: 08:00-18:00 • Pazar: 09:00-16:00</li>
             </ul>
           </div>
           <div>
             <h3 className="font-semibold mb-4 font-headline">Sosyal Medya</h3>
             <div className="flex flex-wrap gap-4">
-              <Link href="https://www.facebook.com/marmaraziraat" className="text-muted-foreground hover:text-primary transition-colors" target="_blank" rel="noopener noreferrer">Facebook</Link>
-              <Link href="https://www.instagram.com/marmaraziraat" className="text-muted-foreground hover:text-primary transition-colors" target="_blank" rel="noopener noreferrer">Instagram</Link>
-              <Link href="https://www.linkedin.com/company/marmaraziraat" className="text-muted-foreground hover:text-primary transition-colors" target="_blank" rel="noopener noreferrer">LinkedIn</Link>
+              <Link href="https://www.facebook.com/marmaraziraat" className="text-muted-foreground hover:text-green-600 transition-colors" target="_blank" rel="noopener noreferrer">Facebook</Link>
+              <Link href="https://www.instagram.com/marmaraziraat" className="text-muted-foreground hover:text-green-600 transition-colors" target="_blank" rel="noopener noreferrer">Instagram</Link>
+              <Link href="https://www.linkedin.com/company/marmaraziraat" className="text-muted-foreground hover:text-green-600 transition-colors" target="_blank" rel="noopener noreferrer">LinkedIn</Link>
             </div>
           </div>
         </div>

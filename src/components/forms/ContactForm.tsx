@@ -1,9 +1,10 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
+import { useFormStatus } from "react-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useState, useTransition } from "react";
 import { handleContactFormSubmit } from "@/lib/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,21 +24,23 @@ type ContactFormValues = z.infer<typeof contactFormSchema>;
 
 const initialState = {
   message: "",
-  errors: undefined,
+  errors: undefined as any,
   success: false,
 };
 
-function SubmitButton() {
+function SubmitButton({ isPending }: { isPending?: boolean }) {
   const { pending } = useFormStatus();
+  const isLoading = pending || isPending;
   return (
-    <Button type="submit" disabled={pending} className="w-full md:w-auto">
-      {pending ? "Gönderiliyor..." : "Mesajı Gönder"}
+    <Button type="submit" disabled={isLoading} className="w-full md:w-auto">
+      {isLoading ? "Gönderiliyor..." : "Mesajı Gönder"}
     </Button>
   );
 }
 
 export default function ContactForm() {
-  const [state, formAction] = useFormState(handleContactFormSubmit, initialState);
+  const [state, setState] = useState(initialState);
+  const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
 
   const form = useForm<ContactFormValues>({
@@ -59,12 +62,24 @@ export default function ContactForm() {
       });
       if (state.success) {
         form.reset();
+        setState(initialState);
       }
     }
   }, [state, toast, form]);
 
+  const handleSubmit = async (formData: FormData) => {
+    startTransition(async () => {
+      const result = await handleContactFormSubmit(state, formData);
+      setState({
+        message: result.message,
+        errors: result.errors || undefined,
+        success: result.success
+      });
+    });
+  };
+
   return (
-    <form action={formAction} className="space-y-6">
+    <form action={handleSubmit} className="space-y-6">
       {/* Honeypot field for spam protection */}
       <div className="sr-only" aria-hidden="true">
         <Label htmlFor="honeypot">Lütfen bu alanı boş bırakın</Label>
@@ -118,7 +133,7 @@ export default function ContactForm() {
         )}
       </div>
       
-      <SubmitButton />
+      <SubmitButton isPending={isPending} />
     </form>
   );
 }

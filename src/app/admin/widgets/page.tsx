@@ -75,6 +75,7 @@ export default function WidgetsPage() {
       case 'gallery': return <Grip className="h-5 w-5" />;
       case 'contact': return <Mail className="h-5 w-5" />;
       case 'feature': return <Star className="h-5 w-5" />;
+      case 'slider': return <Image className="h-5 w-5" />;
       default: return <Layout className="h-5 w-5" />;
     }
   };
@@ -87,6 +88,7 @@ export default function WidgetsPage() {
       case 'gallery': return 'Galeri';
       case 'contact': return 'İletişim';
       case 'feature': return 'Özellik';
+      case 'slider': return 'Resim Slider';
       default: return 'Bilinmeyen';
     }
   };

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowRight, Mail, Star, Zap, Shield, Users, Leaf, Truck, Award, CheckCircle, Scissors, Flower, TreePine, Sprout, Bot, Lightbulb, BookOpen, FileText } from 'lucide-react';
+import DynamicSlider from '@/components/ui/DynamicSlider';
 import { collection, getDocs, query, where, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { getPremiumProducts } from '@/lib/actions/productActions';
@@ -119,49 +120,56 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col">
-      {/* Apple-style Hero Section */}
-      <section className="apple-section bg-agriculture-primary">
-        <div className="absolute inset-0 apple-parallax">
-          <Image
-            src="https://images.unsplash.com/photo-1416879595882-3373a0480b5b?q=80&w=2070"
-            alt="Bahçe Peyzajı"
-            fill
-            priority
-            className="object-cover opacity-70"
-          />
-        </div>
-        <div className="relative container mx-auto text-center px-4 py-8 sm:py-12">
-          <Badge className="mb-6 sm:mb-8 apple-glass text-white border-white/30 text-xs sm:text-sm">
-            🌱 Türkiye'nin En Kapsamlı Bahçe Kataloğu
-          </Badge>
-          <h1 className="apple-hero-text text-white mb-6 sm:mb-8">
-            Hayalinizdeki{' '}
-            <span className="text-agriculture-light">Bahçe</span>
-          </h1>
-          <p className="apple-hero-subtext text-agriculture-light mb-8 sm:mb-12 max-w-2xl mx-auto px-4">
-            Marmara Ziraat ile bahçenizi güzelleştirin. Premium kalitede çim tohumu, gübre ve bahçe ürünleri.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center px-4">
-            <Button 
-              size="lg" 
-              className="apple-button bg-white text-agriculture-primary hover:bg-agriculture-light hover:text-agriculture-700 text-sm sm:text-base font-semibold"
-              asChild
-            >
-              <Link href="/products">
-                Ürünleri Keşfet <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
-              </Link>
-            </Button>
-            <Button 
-              size="lg" 
-              variant="outline" 
-              className="apple-button border-2 border-white bg-white/10 text-white hover:bg-white hover:text-agriculture-primary backdrop-blur-sm text-sm sm:text-base font-semibold"
-              asChild
-            >
-              <Link href="/contact">İletişim</Link>
-            </Button>
-          </div>
-        </div>
-      </section>
+      {/* Dynamic Hero Slider */}
+      <DynamicSlider 
+        position="homepage-hero"
+        className="mb-0"
+        fallback={
+          /* Fallback to original hero section if no slider */
+          <section className="apple-section bg-agriculture-primary">
+            <div className="absolute inset-0 apple-parallax">
+              <Image
+                src="https://images.unsplash.com/photo-1416879595882-3373a0480b5b?q=80&w=2070"
+                alt="Bahçe Peyzajı"
+                fill
+                priority
+                className="object-cover opacity-70"
+              />
+            </div>
+            <div className="relative container mx-auto text-center px-4 py-8 sm:py-12">
+              <Badge className="mb-6 sm:mb-8 apple-glass text-white border-white/30 text-xs sm:text-sm">
+                🌱 Türkiye'nin En Kapsamlı Bahçe Kataloğu
+              </Badge>
+              <h1 className="apple-hero-text text-white mb-6 sm:mb-8">
+                Hayalinizdeki{' '}
+                <span className="text-agriculture-light">Bahçe</span>
+              </h1>
+              <p className="apple-hero-subtext text-agriculture-light mb-8 sm:mb-12 max-w-2xl mx-auto px-4">
+                Marmara Ziraat ile bahçenizi güzelleştirin. Premium kalitede çim tohumu, gübre ve bahçe ürünleri.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center px-4">
+                <Button 
+                  size="lg" 
+                  className="apple-button bg-white text-agriculture-primary hover:bg-agriculture-light hover:text-agriculture-700 text-sm sm:text-base font-semibold"
+                  asChild
+                >
+                  <Link href="/products">
+                    Ürünleri Keşfet <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
+                  </Link>
+                </Button>
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  className="apple-button border-2 border-white bg-white/10 text-white hover:bg-white hover:text-agriculture-primary backdrop-blur-sm text-sm sm:text-base font-semibold"
+                  asChild
+                >
+                  <Link href="/contact">İletişim</Link>
+                </Button>
+              </div>
+            </div>
+          </section>
+        }
+      />
 
       {/* Stats Section */}
       <AppleScrollSection>
@@ -215,10 +223,18 @@ export default function HomePage() {
         </section>
       </AppleScrollSection>
 
-      {/* Products Section */}
+      {/* Featured Slider Section */}
       <AppleScrollSection>
         <section className="py-20 sm:py-24 md:py-32 bg-white">
           <div className="container mx-auto px-4">
+            {/* Try to show dynamic slider first */}
+            <DynamicSlider 
+              position="homepage-featured"
+              showTitle={true}
+              className="mb-12"
+              fallback={null}
+            />
+            
             <div className="text-center mb-12 md:mb-20">
               <Badge className="mb-6 bg-agriculture-100 text-agriculture-primary hover:bg-agriculture-200">
                 Öne Çıkan Ürünler

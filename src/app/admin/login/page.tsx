@@ -14,6 +14,8 @@ import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 
 export default function AdminLoginPage() {
+  console.log('🔄 AdminLoginPage component rendering...');
+  
   const router = useRouter();
   const { toast } = useToast();
   const [email, setEmail] = useState('');
@@ -40,8 +42,18 @@ export default function AdminLoginPage() {
         localStorage.removeItem('adminEmail');
       }
       
+      console.log('✅ Login successful:', {
+        userEmail: email,
+        timestamp: new Date().toISOString()
+      });
+      
       toast({ title: 'Giriş Başarılı!', description: 'Yönetim paneline yönlendiriliyorsunuz.' });
-      router.push('/admin');
+      
+      // Kısa bir gecikme ekleyerek admin kontrolü için zaman tanı
+      setTimeout(() => {
+        console.log('🔄 Redirecting to admin panel...');
+        router.push('/admin');
+      }, 500);
     } catch (err: any) {
       console.error("Login Error:", err);
       let errorMessage = "Giriş yapılamadı. Lütfen bilgilerinizi kontrol edin.";
@@ -81,6 +93,8 @@ export default function AdminLoginPage() {
     }
   };
 
+  console.log('🎨 Rendering login form');
+  
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
       <Card className="w-full max-w-md mx-4">

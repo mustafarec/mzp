@@ -22,12 +22,12 @@ import {
   FileText,
   Filter,
   Loader2,
-  PlayCircle,
-  X
+  X,
+  Star
 } from 'lucide-react';
+import Carousel from '@/components/ui/Carousel';
+import DynamicSlider from '@/components/ui/DynamicSlider';
 import { getCatalogs } from '@/lib/actions/catalogActions';
-import CatalogFlipbook from '@/components/ui/CatalogFlipbook';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import type { Catalog } from '@/types';
 
 export default function CatalogsPage() {
@@ -36,10 +36,6 @@ export default function CatalogsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBrand, setSelectedBrand] = useState<string>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [flipbookDialog, setFlipbookDialog] = useState<{
-    open: boolean;
-    catalog: Catalog | null;
-  }>({ open: false, catalog: null });
 
   // Load catalogs
   useEffect(() => {
@@ -96,24 +92,18 @@ export default function CatalogsPage() {
     }).format(date);
   };
 
-  // Open flipbook preview
-  const openFlipbookPreview = (catalog: Catalog) => {
-    setFlipbookDialog({
-      open: true,
-      catalog: catalog
-    });
-  };
 
-  // Close flipbook preview
-  const closeFlipbookPreview = () => {
-    setFlipbookDialog({
-      open: false,
-      catalog: null
-    });
-  };
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Dynamic Slider */}
+      <DynamicSlider 
+        position="catalogs-top"
+        showTitle={true}
+        className="mb-12"
+        fallback={null}
+      />
+      
       {/* Header */}
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold mb-4">Marka Katalogları</h1>
@@ -121,6 +111,7 @@ export default function CatalogsPage() {
           Bahçe ve ziraat ürünleri markalarının en güncel kataloglarını inceleyin
         </p>
       </div>
+
 
       {/* Search and Filters */}
       <Card className="mb-8">
@@ -297,15 +288,6 @@ export default function CatalogsPage() {
                     variant="outline" 
                     size="sm"
                     className="px-2"
-                    onClick={() => openFlipbookPreview(catalog)}
-                    title="Flipbook önizleme"
-                  >
-                    <PlayCircle className="h-3 w-3" />
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="px-2"
                     onClick={() => {
                       const link = document.createElement('a');
                       link.href = catalog.pdfUrl;
@@ -331,41 +313,6 @@ export default function CatalogsPage() {
         </div>
       )} */}
 
-      {/* Flipbook Preview Dialog */}
-      <Dialog open={flipbookDialog.open} onOpenChange={(open) => {
-        if (!open) {
-          closeFlipbookPreview();
-        }
-      }}>
-        <DialogContent className="max-w-6xl w-full h-[90vh] p-2 sm:p-4">
-          <DialogHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <DialogTitle className="text-sm sm:text-lg line-clamp-1">
-                {flipbookDialog.catalog?.title} - Flipbook Önizleme
-              </DialogTitle>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={closeFlipbookPreview}
-                className="h-8 w-8 p-0"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          </DialogHeader>
-          
-          {flipbookDialog.catalog && (
-            <div className="flex-1 overflow-hidden">
-              <CatalogFlipbook
-                catalog={flipbookDialog.catalog}
-                className="h-full"
-                showControls={true}
-                autoLoad={true}
-              />
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

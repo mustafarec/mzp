@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import type { ContactFormData, NewsletterFormData } from "@/types";
+import { sendContactEmail } from "@/lib/email";
 
 // Define Zod schemas for validation
 const contactFormSchema = z.object({
@@ -37,11 +38,34 @@ export async function handleContactFormSubmit(prevState: any, formData: FormData
 
   const data: ContactFormData = validatedFields.data;
 
-  // Simulate sending data to an API or database
-  console.log("Contact form submitted:", data);
-  // In a real app, you would save this to Firestore or send an email.
+  // Send email using Resend
+  try {
+    const emailResult = await sendContactEmail({
+      name: data.name,
+      email: data.email,
+      message: data.message,
+    });
 
-  return { message: "Mesajınız başarıyla gönderildi. En kısa sürede sizinle iletişime geçeceğiz.", success: true };
+    if (!emailResult.success) {
+      console.error("Email sending failed:", emailResult.error);
+      return { 
+        message: "Mesaj gönderilirken bir hata oluştu. Lütfen daha sonra tekrar deneyin veya doğrudan email gönderin.", 
+        success: false 
+      };
+    }
+
+    console.log("Email sent successfully:", emailResult.data);
+    return { 
+      message: "Mesajınız başarıyla gönderildi. En kısa sürede sizinle iletişime geçeceğiz.", 
+      success: true 
+    };
+  } catch (error) {
+    console.error("Unexpected error sending email:", error);
+    return { 
+      message: "Beklenmeyen bir hata oluştu. Lütfen daha sonra tekrar deneyin.", 
+      success: false 
+    };
+  }
 }
 
 

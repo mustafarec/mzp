@@ -1,5 +1,5 @@
 import ContactForm from "@/components/forms/ContactForm";
-import { Mail, Phone, MapPin } from "lucide-react";
+import { MapPin } from "lucide-react";
 
 export default function ContactPage() {
   return (
@@ -17,33 +17,36 @@ export default function ContactPage() {
           <ContactForm />
         </div>
         
-        <div className="space-y-8">
-          <div className="bg-card p-8 rounded-lg shadow-lg">
-            <h2 className="text-2xl font-semibold mb-6 text-primary">İletişim Bilgilerimiz</h2>
-            <ul className="space-y-4 text-foreground">
-              <li className="flex items-center">
-                <Mail className="h-6 w-6 mr-3 text-primary" />
-                <span>info@marmaraziraat.com</span>
-              </li>
-              <li className="flex items-center">
-                <Phone className="h-6 w-6 mr-3 text-primary" />
-                <span>(0212) 672 99 56</span>
-              </li>
-              <li className="flex items-start">
-                <MapPin className="h-6 w-6 mr-3 text-primary mt-1" />
-                <span>Bahçeşehir, Hoşdere-Bahçeşehir Yolu No:66, 34488 Başakşehir/İstanbul</span>
-              </li>
-            </ul>
-          </div>
-
-          <div className="bg-card p-8 rounded-lg shadow-lg">
-            <h2 className="text-2xl font-semibold mb-6 text-primary">Çalışma Saatlerimiz</h2>
-            <div className="text-foreground space-y-2">
-              <p><strong>Hafta içi:</strong> 09:00 - 17:00</p>
-              <p><strong>Cumartesi:</strong> 09:00 - 17:00</p>
-              <p><strong>Pazar:</strong> 09:00 - 17:00</p>
-              <p className="text-sm text-muted-foreground mt-3">
-                * Bayram günlerinde çalışma saatleri değişebilir.
+        <div className="bg-card p-8 rounded-lg shadow-lg">
+          <h2 className="text-2xl font-semibold mb-6 text-primary">Konumumuz</h2>
+          <div className="space-y-4">
+            <div className="w-full h-80 rounded-lg overflow-hidden">
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3006.8969486982756!2d28.8093!3d41.1086!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x14caa7040068086b%3A0x3c6a3fc1b3cb5b94!2sBah%C3%A7e%C5%9Fehir%2C%20Ho%C5%9Fdere-Bah%C3%A7e%C5%9Fehir%20Yolu%20No%3A66%2C%2034488%20Ba%C5%9Fak%C5%9Fehir%2F%C4%B0stanbul!5e0!3m2!1str!2str!4v1634567890123!5m2!1str!2str"
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Marmara Ziraat Konum"
+              ></iframe>
+            </div>
+            <a 
+              href="https://maps.google.com/maps?q=Bahçeşehir,+Hoşdere-Bahçeşehir+Yolu+No:66,+34488+Başakşehir/İstanbul"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+            >
+              <MapPin className="h-4 w-4 mr-2" />
+              Google Maps'te Aç
+            </a>
+            <div className="pt-4 border-t border-gray-200">
+              <p className="text-sm text-muted-foreground">
+                <strong>Adres:</strong> Bahçeşehir, Hoşdere-Bahçeşehir Yolu No:66, 34488 Başakşehir/İstanbul
+              </p>
+              <p className="text-sm text-muted-foreground mt-2">
+                <strong>Çalışma Saatleri:</strong> Hafta içi & Cumartesi: 08:00-18:00 • Pazar: 09:00-16:00
               </p>
             </div>
           </div>

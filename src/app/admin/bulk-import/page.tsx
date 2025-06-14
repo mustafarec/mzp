@@ -115,9 +115,36 @@ export default function BulkImportPage() {
     setResults({ created: 0, updated: 0, skipped: 0, errors: [] });
 
     try {
-      const result = await smartBulkImport(products);
-      setResults(result);
+      // Excel verilerini plain object'e dönüştür
+      const plainProducts = products.map(product => ({
+        İsim: String(product.İsim || ''),
+        Açıklama: String(product.Açıklama || ''),
+        SKU: product.SKU ? String(product.SKU) : undefined,
+        Marka: product.Marka ? String(product.Marka) : undefined,
+        Kategoriler: String(product.Kategoriler || ''),
+        'Resim URL': String(product['Resim URL'] || '')
+      }));
+      
+      // Progress simulation - ürün sayısına göre tahmini süre
+      const totalProducts = plainProducts.length;
+      const estimatedTimeMs = Math.max(2000, totalProducts * 100); // Minimum 2 saniye, ürün başına 100ms
+      const updateInterval = Math.max(100, estimatedTimeMs / 50); // 50 update yapacak
+      
+      // Progress bar animasyonu başlat
+      const progressInterval = setInterval(() => {
+        setProgress(prev => {
+          const nextProgress = prev + (90 / (estimatedTimeMs / updateInterval));
+          return Math.min(nextProgress, 90); // Maximum %90'a kadar, son %10'u işlem bitince
+        });
+      }, updateInterval);
+      
+      const result = await smartBulkImport(plainProducts);
+      
+      // Progress interval'ı temizle ve %100'e set et
+      clearInterval(progressInterval);
       setProgress(100);
+      
+      setResults(result);
       
       toast({
         title: 'İşlem Tamamlandı',
@@ -125,6 +152,9 @@ export default function BulkImportPage() {
         variant: result.created > 0 || result.updated > 0 ? 'default' : 'destructive'
       });
     } catch (error) {
+      // Hata durumunda progress interval'ı temizle
+      setProgress(0);
+      
       toast({
         title: 'Hata!',
         description: 'İçe aktarma işlemi başarısız',

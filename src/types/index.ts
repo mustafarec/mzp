@@ -161,7 +161,7 @@ export interface Media {
 
 export interface Widget {
   id: string;
-  type: 'hero' | 'text' | 'image' | 'gallery' | 'contact' | 'feature';
+  type: 'hero' | 'text' | 'image' | 'gallery' | 'contact' | 'feature' | 'slider';
   title?: string;
   content?: string;
   imageUrl?: string;
@@ -171,6 +171,49 @@ export interface Widget {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+// Slider-specific interfaces
+export interface SliderImage {
+  id: string;
+  url: string;
+  alt: string;
+  title?: string;
+  description?: string;
+  linkUrl?: string;
+  linkText?: string;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SliderSettings {
+  autoplay: boolean;
+  autoplayInterval: number;
+  showDots: boolean;
+  showArrows: boolean;
+  loop: boolean;
+  pauseOnHover: boolean;
+  itemsPerView: {
+    mobile: number;
+    tablet: number;
+    desktop: number;
+  };
+  height?: {
+    mobile: string;
+    tablet: string;
+    desktop: string;
+  };
+  transition: 'slide' | 'fade';
+  speed: number;
+}
+
+export interface SliderWidget extends Omit<Widget, 'images'> {
+  type: 'slider';
+  images: SliderImage[];
+  settings: SliderSettings;
+  position: 'homepage-hero' | 'homepage-featured' | 'products-top' | 'catalogs-top' | 'custom';
+  displayName?: string;
 }
 
 export interface PageWidget {

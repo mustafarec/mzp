@@ -14,23 +14,37 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
+  console.log('🔄 AdminLayout component rendering...');
+  
   const { user, isAdmin, loading, adminEmails } = useAdmin();
   const router = useRouter();
   const pathname = usePathname();
 
-  const isLoginPage = pathname === '/admin/login';
+  const isLoginPage = pathname.startsWith('/admin/login');
 
   useEffect(() => {
     if (isLoginPage) return;
 
+    console.log('🔄 Admin layout effect:', {
+      loading,
+      hasUser: !!user,
+      userEmail: user?.email,
+      isAdmin,
+      adminEmailsCount: adminEmails.length,
+      pathname
+    });
+
     if (!loading && !user) {
+      console.log('🚪 Redirecting to login - no user');
       router.push('/admin/login');
     } else if (!loading && user && !isAdmin && adminEmails.length > 0) {
+      console.log('⛔ Redirecting to home - user not admin');
       router.push('/');
     }
-  }, [user, isAdmin, loading, router, isLoginPage, adminEmails]);
+  }, [user, isAdmin, loading, router, isLoginPage, adminEmails, pathname]);
 
   if (isLoginPage) {
+    console.log('✅ Rendering login page children');
     return <>{children}</>;
   }
 

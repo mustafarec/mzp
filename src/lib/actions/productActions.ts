@@ -603,43 +603,88 @@ export async function smartBulkImport(
       if (existingProduct) {
         let needsUpdate = false;
         const updateData: Partial<Product> = {};
+        const updateReasons: string[] = [];
 
+        // Resim güncelleme - boş ise veya Excel'dekiler farklı ise
         if (!existingProduct.images || existingProduct.images.length === 0) {
           if (imageUrls.length > 0) {
             updateData.images = imageUrls;
             needsUpdate = true;
+            updateReasons.push('resim eklendi');
+          }
+        } else if (imageUrls.length > 0) {
+          // Mevcut resimlerle Excel'deki resimleri karşılaştır
+          const existingImageSet = new Set(existingProduct.images);
+          const excelImageSet = new Set(imageUrls);
+          const hasNewImages = imageUrls.some(url => !existingImageSet.has(url));
+          
+          if (hasNewImages) {
+            // Yeni resimleri mevcut resimlere ekle (duplicate olmadan)
+            const mergedImages = Array.from(new Set([...existingProduct.images, ...imageUrls]));
+            updateData.images = mergedImages;
+            needsUpdate = true;
+            updateReasons.push('yeni resimler eklendi');
           }
         }
 
+        // Açıklama güncelleme - boş ise veya farklı ise
         if (!existingProduct.description || existingProduct.description.trim() === '') {
           updateData.description = excelProduct.Açıklama;
           needsUpdate = true;
+          updateReasons.push('açıklama eklendi');
+        } else if (existingProduct.description !== excelProduct.Açıklama) {
+          updateData.description = excelProduct.Açıklama;
+          needsUpdate = true;
+          updateReasons.push('açıklama güncellendi');
         }
 
+        // SKU güncelleme
         if (!existingProduct.sku && excelProduct.SKU) {
           updateData.sku = excelProduct.SKU;
           needsUpdate = true;
+          updateReasons.push('SKU eklendi');
+        } else if (existingProduct.sku !== excelProduct.SKU && excelProduct.SKU) {
+          updateData.sku = excelProduct.SKU;
+          needsUpdate = true;
+          updateReasons.push('SKU güncellendi');
         }
 
+        // Tag güncelleme
         if (!existingProduct.tags || existingProduct.tags.length === 0) {
           if (excelProduct.Marka) {
             updateData.tags = [excelProduct.Marka];
             needsUpdate = true;
+            updateReasons.push('marka etiketi eklendi');
+          }
+        } else if (excelProduct.Marka) {
+          const existingTags = existingProduct.tags || [];
+          if (!existingTags.includes(excelProduct.Marka)) {
+            updateData.tags = [...existingTags, excelProduct.Marka];
+            needsUpdate = true;
+            updateReasons.push('yeni marka etiketi eklendi');
           }
         }
 
+        // Kategori güncelleme
         if (!existingProduct.categoryId || existingProduct.categoryId === 'default') {
           if (categoryId && categoryId !== 'default') {
             updateData.categoryId = categoryId;
             needsUpdate = true;
+            updateReasons.push('kategori eklendi');
           }
+        } else if (existingProduct.categoryId !== categoryId && categoryId && categoryId !== 'default') {
+          updateData.categoryId = categoryId;
+          needsUpdate = true;
+          updateReasons.push('kategori güncellendi');
         }
 
         if (needsUpdate) {
           await updateExistingProduct(existingProduct.id, updateData);
           updated++;
+          console.log(`✅ Ürün güncellendi: ${excelProduct.İsim} (${updateReasons.join(', ')})`);
         } else {
           skipped++;
+          console.log(`⏭️ Ürün atlandı: ${excelProduct.İsim} (değişiklik yok)`);
         }
       } else {
         const product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'> = {
@@ -655,10 +700,12 @@ export async function smartBulkImport(
 
         await createProduct(product);
         created++;
+        console.log(`🆕 Yeni ürün eklendi: ${excelProduct.İsim}`);
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Bilinmeyen hata';
       errors.push(`Satır ${i + 2}: ${errorMessage}`);
+      console.error(`❌ Ürün hatası: ${excelProduct.İsim} - ${errorMessage}`);
     }
   }
 

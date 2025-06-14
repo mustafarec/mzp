@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { usePathname, useRouter } from 'next/navigation';
-import { Home, Package, FolderTree, Settings, LogOut, Shield, FileText, ImageIcon, Layout, BookOpen } from 'lucide-react';
+import { Home, Package, FolderTree, Settings, LogOut, Shield, FileText, ImageIcon, Layout, BookOpen, Images } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { auth } from '@/lib/firebase';
@@ -26,6 +26,11 @@ const navigation = [
     name: 'Widget Yönetimi',
     href: '/admin/widgets',
     icon: Layout,
+  },
+  {
+    name: 'Slider Yönetimi',
+    href: '/admin/sliders',
+    icon: Images,
   },
   {
     name: 'Medya Kütüphanesi',

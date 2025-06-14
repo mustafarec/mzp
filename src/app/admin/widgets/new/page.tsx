@@ -93,6 +93,7 @@ export default function NewWidgetPage() {
       case 'gallery': return 'Resim galerisi';
       case 'contact': return 'İletişim formu';
       case 'feature': return 'Özellik listesi';
+      case 'slider': return 'Dinamik resim slider\'ı';
       default: return '';
     }
   };
@@ -150,6 +151,7 @@ export default function NewWidgetPage() {
                         <SelectItem value="gallery">Galeri</SelectItem>
                         <SelectItem value="contact">İletişim</SelectItem>
                         <SelectItem value="feature">Özellik</SelectItem>
+                        <SelectItem value="slider">Resim Slider</SelectItem>
                       </SelectContent>
                     </Select>
                     <p className="text-xs text-muted-foreground">

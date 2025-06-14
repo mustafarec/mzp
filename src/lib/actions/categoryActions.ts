@@ -354,22 +354,97 @@ export async function getCategoryByName(name: string): Promise<Category | null> 
   }
 }
 
+// Ana kategori mapping sistemi - benzeri kategorileri ana kategorilere yönlendirir
+const CATEGORY_MAPPINGS: { [key: string]: string[] } = {
+  'Çim Tohumu': [
+    'çim', 'tohum', 'grass', 'seed', 'çim tohumu', 'çim tohumları', 
+    'turf', 'lawn', 'karışım', 'mix', 'çim karışım'
+  ],
+  'Gübre': [
+    'gübre', 'fertilizer', 'besın', 'besin', 'nutrient', 'organic',
+    'organik', 'kimyasal', 'chemical', 'npk', 'azot', 'fosfor'
+  ],
+  'Bahçe Makineleri': [
+    'makine', 'machine', 'tool', 'alet', 'aletler', 'makineler',
+    'çim biçme', 'mower', 'trimmer', 'testere', 'motor'
+  ],
+  'Bitki İlaçları': [
+    'ilaç', 'pesticide', 'chemical', 'herbisit', 'fungisit',
+    'insektisit', 'böcek', 'hastalık', 'yabani ot'
+  ],
+  'Peyzaj Malzemeleri': [
+    'peyzaj', 'landscape', 'decoration', 'dekorasyon', 'süs',
+    'bahçe düzenlemesi', 'çakıl', 'taş', 'bordür'
+  ],
+  'Sulama': [
+    'sulama', 'irrigation', 'sprinkler', 'hortum', 'su',
+    'damla sulama', 'yağmurlama'
+  ],
+  'Sera Ürünleri': [
+    'sera', 'greenhouse', 'örtü altı', 'plastik', 'naylon'
+  ]
+};
+
+// Kategori adını normalize et (küçük harf, türkçe karakter düzeltme)
+function normalizeText(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/ğ/g, 'g')
+    .replace(/ü/g, 'u')
+    .replace(/ş/g, 's')
+    .replace(/ı/g, 'i')
+    .replace(/ö/g, 'o')
+    .replace(/ç/g, 'c')
+    .trim();
+}
+
+// Kategori adını ana kategorilerle eşleştir
+function mapToMainCategory(categoryName: string): string {
+  const normalized = normalizeText(categoryName);
+  
+  for (const [mainCategory, keywords] of Object.entries(CATEGORY_MAPPINGS)) {
+    // Tam eşleşme kontrolü
+    if (keywords.some(keyword => normalizeText(keyword) === normalized)) {
+      console.log(`📂 Kategori eşleşti: "${categoryName}" → "${mainCategory}"`);
+      return mainCategory;
+    }
+    
+    // Kısmi eşleşme kontrolü (kategori adı keyword içeriyorsa)
+    if (keywords.some(keyword => normalized.includes(normalizeText(keyword)) || normalizeText(keyword).includes(normalized))) {
+      console.log(`📂 Kategori kısmi eşleşti: "${categoryName}" → "${mainCategory}"`);
+      return mainCategory;
+    }
+  }
+  
+  // Eşleşme bulunamadı, orijinal kategori adını döndür
+  console.log(`📂 Yeni kategori: "${categoryName}"`);
+  return categoryName;
+}
+
 export async function createCategoryIfNotExists(categoryName: string): Promise<string> {
   try {
     if (!categoryName || categoryName.trim() === '' || categoryName === 'default') {
       return 'default';
     }
 
-    const existingCategory = await getCategoryByName(categoryName);
+    // Kategori adını ana kategorilerle eşleştir
+    const mappedCategoryName = mapToMainCategory(categoryName.trim());
+    
+    // Eşleşen ana kategoriyi ara
+    const existingCategory = await getCategoryByName(mappedCategoryName);
     
     if (existingCategory) {
+      if (mappedCategoryName !== categoryName.trim()) {
+        console.log(`✅ Kategori mevcut ana kategoriye yönlendirildi: "${categoryName}" → "${mappedCategoryName}"`);
+      }
       return existingCategory.id;
     }
 
+    // Kategori mevcut değil, yeni oluştur
     const categoryData = {
-      name: categoryName.trim(),
-      slug: generateSlug(categoryName),
-      description: `${categoryName} kategorisi`,
+      name: mappedCategoryName,
+      slug: generateSlug(mappedCategoryName),
+      description: `${mappedCategoryName} kategorisi`,
       parentId: null,
       icon: '',
       isActive: true,
@@ -380,11 +455,116 @@ export async function createCategoryIfNotExists(categoryName: string): Promise<s
 
     const docRef = await addDoc(collection(db, 'categories'), categoryData);
     
-    await logActivity(`Otomatik kategori oluşturuldu: "${categoryName}"`, 'create');
+    await logActivity(`Otomatik kategori oluşturuldu: "${mappedCategoryName}"`, 'create');
+    console.log(`🆕 Yeni kategori oluşturuldu: "${mappedCategoryName}"`);
     
     return docRef.id;
   } catch (error) {
     console.error('Kategori oluşturma hatası:', error);
     return 'default';
+  }
+}
+
+// Benzer kategorileri birleştirme fonksiyonu
+export async function consolidateCategories(): Promise<{
+  merged: number;
+  deleted: number;
+  errors: string[];
+}> {
+  try {
+    const allCategories = await getAllCategories();
+    let merged = 0;
+    let deleted = 0;
+    const errors: string[] = [];
+    
+    console.log(`🔄 Kategori konsolidasyonu başlıyor... Toplam kategori: ${allCategories.length}`);
+    
+    for (const category of allCategories) {
+      try {
+        // Ana kategorilerle eşleştir
+        const mappedName = mapToMainCategory(category.name);
+        
+        // Eğer kategori adı değişiyorsa (ana kategoriye eşleniyorsa)
+        if (mappedName !== category.name) {
+          // Ana kategoriyi bul veya oluştur
+          let mainCategory = await getCategoryByName(mappedName);
+          
+          if (!mainCategory) {
+            // Ana kategoriyi oluştur
+            const categoryData = {
+              name: mappedName,
+              slug: generateSlug(mappedName),
+              description: `${mappedName} kategorisi`,
+              parentId: null,
+              icon: '',
+              isActive: true,
+              sortOrder: 0,
+              createdAt: serverTimestamp(),
+              updatedAt: serverTimestamp(),
+            };
+            
+            const docRef = await addDoc(collection(db, 'categories'), categoryData);
+            mainCategory = { id: docRef.id, ...categoryData } as Category;
+            console.log(`🆕 Ana kategori oluşturuldu: "${mappedName}"`);
+          }
+          
+          // Bu kategorideki tüm ürünleri ana kategoriye taşı
+          const productsQuery = query(
+            collection(db, 'products'),
+            where('categoryId', '==', category.id)
+          );
+          const productsSnapshot = await getDocs(productsQuery);
+          
+          // Ürünleri yeni kategoriye taşı
+          for (const productDoc of productsSnapshot.docs) {
+            await updateDoc(doc(db, 'products', productDoc.id), {
+              categoryId: mainCategory.id,
+              updatedAt: serverTimestamp()
+            });
+          }
+          
+          // Eski kategoriyi sil
+          await deleteDoc(doc(db, 'categories', category.id));
+          
+          merged++;
+          console.log(`✅ Kategori birleştirildi: "${category.name}" → "${mappedName}" (${productsSnapshot.size} ürün taşındı)`);
+        }
+      } catch (error) {
+        const errorMsg = `Kategori "${category.name}" birleştirilemedi: ${error}`;
+        errors.push(errorMsg);
+        console.error(`❌ ${errorMsg}`);
+      }
+    }
+    
+    // Boş kategorileri temizle
+    const updatedCategories = await getAllCategories();
+    for (const category of updatedCategories) {
+      try {
+        const productsQuery = query(
+          collection(db, 'products'),
+          where('categoryId', '==', category.id)
+        );
+        const productsSnapshot = await getDocs(productsQuery);
+        
+        if (productsSnapshot.empty) {
+          await deleteDoc(doc(db, 'categories', category.id));
+          deleted++;
+          console.log(`🗑️ Boş kategori silindi: "${category.name}"`);
+        }
+      } catch (error) {
+        const errorMsg = `Boş kategori "${category.name}" silinemedi: ${error}`;
+        errors.push(errorMsg);
+        console.error(`❌ ${errorMsg}`);
+      }
+    }
+    
+    await logActivity(`Kategori konsolidasyonu tamamlandı: ${merged} birleştirildi, ${deleted} silindi`, 'update');
+    
+    console.log(`✅ Kategori konsolidasyonu tamamlandı: ${merged} birleştirildi, ${deleted} boş kategori silindi`);
+    
+    return { merged, deleted, errors };
+  } catch (error) {
+    console.error('Kategori konsolidasyonu hatası:', error);
+    return { merged: 0, deleted: 0, errors: [error instanceof Error ? error.message : 'Bilinmeyen hata'] };
   }
 } 

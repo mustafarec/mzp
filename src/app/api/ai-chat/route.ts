@@ -52,13 +52,38 @@ HTML etiketleri kullan: <strong>, <em>, <br>, <ul>, <li>
 Her önerdiğin ürünün adını tam olarak katalogdaki gibi yaz.`;
 }
 
+async function convertImageToBase64(file: File): Promise<string> {
+  const buffer = await file.arrayBuffer();
+  const base64 = Buffer.from(buffer).toString('base64');
+  return base64;
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const { message } = await request.json();
+    let message = '';
+    let imageBase64 = '';
+    let imageMimeType = '';
 
-    if (!message) {
+    // Check if request has form data (image + text)
+    const contentType = request.headers.get('content-type');
+    
+    if (contentType?.includes('multipart/form-data')) {
+      const formData = await request.formData();
+      message = formData.get('message') as string || '';
+      const imageFile = formData.get('image') as File;
+      
+      if (imageFile) {
+        imageBase64 = await convertImageToBase64(imageFile);
+        imageMimeType = imageFile.type;
+      }
+    } else {
+      const body = await request.json();
+      message = body.message;
+    }
+
+    if (!message && !imageBase64) {
       return NextResponse.json(
-        { error: 'Mesaj gerekli' },
+        { error: 'Mesaj veya resim gerekli' },
         { status: 400 }
       );
     }
@@ -69,7 +94,32 @@ export async function POST(request: NextRequest) {
 
     const products = await getAllActiveProducts();
     const systemPrompt = createSystemPrompt(products);
-    const prompt = `${systemPrompt}\n\nKullanıcı sorusu: ${message}`;
+    
+    // Build content parts
+    const parts: any[] = [];
+    
+    if (imageBase64) {
+      parts.push({
+        inline_data: {
+          mime_type: imageMimeType,
+          data: imageBase64
+        }
+      });
+    }
+    
+    if (message) {
+      const prompt = imageBase64 
+        ? `${systemPrompt}\n\nKullanıcı resim gönderdi ve şunu soruyor: ${message}\n\nResimdeki bitki/bahçe sorunu hakkında analiz yap ve uygun ürün öner.`
+        : `${systemPrompt}\n\nKullanıcı sorusu: ${message}`;
+      
+      parts.push({
+        text: prompt
+      });
+    } else if (imageBase64) {
+      parts.push({
+        text: `${systemPrompt}\n\nKullanıcı bir resim gönderdi. Resimdeki bitki, hastalık veya bahçe sorunu hakkında analiz yap ve katalogdaki uygun ürünleri öner.`
+      });
+    }
 
     const response = await fetch(`${API_URL}?key=${GOOGLE_AI_API_KEY}`, {
       method: 'POST',
@@ -79,11 +129,7 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         contents: [
           {
-            parts: [
-              {
-                text: prompt
-              }
-            ]
+            parts: parts
           }
         ]
       })
