@@ -24,10 +24,36 @@ async function getAllActiveProducts(): Promise<Product[]> {
   }
 }
 
+// İçerik kontrolü için prompt
+function createContentCheckPrompt(): string {
+  return `Bu resim bahçe, bitki, tarım, ziraat, peyzaj veya botanik ile ilgili mi?
+
+SADECE şu kelimelerden biri ile cevap ver: BAHCE_ILGILI veya KONU_DISI
+
+BAHÇE İLE İLGİLİ KONULAR:
+- Bitkiler (çiçek, ağaç, çim, sebze, meyve, yaprak)
+- Hastalık belirtileri (yaprak sararması, leke, çürüme, solgunluk)
+- Zararlılar (böcek, haşere, mantar, küf)
+- Toprak problemleri (renk değişimi, kırılgan yapı)
+- Bahçe aletleri ve ekipmanları
+- Peyzaj düzenlemesi
+- Tarımsal ürünler ve alanlar
+
+KONU DIŞI (REDDEDILECEK):
+- İnsan, hayvan, yiyecek hazır ürünler
+- Kıyafet, ayakkabı, aksesuar
+- Araç, bina, ev eşyası
+- Elektronik cihazlar
+- Spor malzemeleri
+- Bahçe/tarım ile ilgisi olmayan diğer konular`;
+}
+
 function createSystemPrompt(products: Product[]): string {
   const productList = products.map(p => `- ${p.name} (${p.slug}): ${p.description?.replace(/<[^>]*>/g, '')?.slice(0, 100) || 'Açıklama yok'}`).join('\n');
   
   return `Sen Marmara Ziraat şirketinin uzman bahçe danışmanısın. Görevin:
+
+ÖNEMLİ: SADECE bahçe, bitki, tarım ve ziraat konularında yardım et!
 
 KURALLAR:
 1. SADECE mevcut ürün kataloğundaki ürünleri öner
@@ -35,6 +61,7 @@ KURALLAR:
 3. Bitki adlarını doğru kullan (ör: gül, çim, domates)
 4. Türkçe konuş, kısa ve net yanıt ver
 5. Var olmayan ürün önerme
+6. Bahçe/ziraat dışı konularda ürün önerme
 
 MEVCUT ÜRÜN KATALOĞU:
 ${productList}
@@ -56,6 +83,53 @@ async function convertImageToBase64(file: File): Promise<string> {
   const buffer = await file.arrayBuffer();
   const base64 = Buffer.from(buffer).toString('base64');
   return base64;
+}
+
+// Resim içerikini kontrol et (bahçe ile ilgili mi?)
+async function checkImageContent(imageBase64: string, imageMimeType: string): Promise<boolean> {
+  try {
+    const contentCheckPrompt = createContentCheckPrompt();
+    
+    const response = await fetch(`${API_URL}?key=${GOOGLE_AI_API_KEY}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              {
+                inline_data: {
+                  mime_type: imageMimeType,
+                  data: imageBase64
+                }
+              },
+              {
+                text: contentCheckPrompt
+              }
+            ]
+          }
+        ]
+      })
+    });
+
+    if (!response.ok) {
+      console.error('İçerik kontrol API hatası:', response.status);
+      return true; // Hata durumunda işleme devam et
+    }
+
+    const data = await response.json();
+    const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    
+    // Yanıtı temizle ve kontrol et
+    const cleanResponse = aiResponse.trim().toUpperCase();
+    return cleanResponse.includes('BAHCE_ILGILI');
+    
+  } catch (error) {
+    console.error('İçerik kontrol hatası:', error);
+    return true; // Hata durumunda işleme devam et
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -92,6 +166,37 @@ export async function POST(request: NextRequest) {
       throw new Error('Google AI API key bulunamadı');
     }
 
+    // Resim varsa içerik kontrolü yap
+    if (imageBase64) {
+      const isGardenRelated = await checkImageContent(imageBase64, imageMimeType);
+      
+      if (!isGardenRelated) {
+        // Bahçe ile ilgili değilse, nazik reddetme mesajı döndür
+        const rejectionMessage = `<strong>Bu resim bahçe ve ziraat alanımızla ilgili görünmüyor.</strong><br><br>
+
+Size <strong>bahçe ürünleri</strong>, <strong>bitki hastalıkları</strong>, <strong>gübre</strong>, <strong>tohum</strong> ve <strong>peyzaj</strong> konularında yardımcı olabilirim.<br><br>
+
+<strong>Yardımcı olabileceğim konular:</strong>
+<ul>
+<li>🌱 Bitki hastalıkları ve tedavi yöntemleri</li>
+<li>🌿 Gübre ve beslenme sorunları</li>
+<li>🌾 Çim ve tohum problemleri</li>
+<li>🌸 Bahçe düzenlemesi ve peyzaj</li>
+<li>🐛 Zararlı kontrolü ve ilaçlama</li>
+</ul>
+
+Bahçe ile ilgili sorularınız için bizimle iletişime geçebilirsiniz:<br>
+📞 <strong>(0212) 672 99 56</strong><br>
+📧 <strong>info@marmaraziraat.com</strong>`;
+
+        return NextResponse.json({ 
+          message: rejectionMessage,
+          timestamp: new Date().toISOString(),
+          rejected: true
+        });
+      }
+    }
+
     const products = await getAllActiveProducts();
     const systemPrompt = createSystemPrompt(products);
     
@@ -108,6 +213,37 @@ export async function POST(request: NextRequest) {
     }
     
     if (message) {
+      // Text mesajları için basit konu kontrolü
+      const gardenKeywords = ['bitki', 'çiçek', 'ağaç', 'çim', 'bahçe', 'tohum', 'gübre', 'ilaç', 'hastalık', 'böcek', 'yaprak', 'toprak', 'sulama', 'budama', 'peyzaj', 'meyve', 'sebze', 'tarım', 'ziraat'];
+      const messageWords = message.toLowerCase();
+      const hasGardenKeyword = gardenKeywords.some(keyword => messageWords.includes(keyword));
+      
+      // Eğer resim yoksa ve bahçe ile ilgili anahtar kelime yoksa kontrol et
+      if (!imageBase64 && !hasGardenKeyword) {
+        const rejectionMessage = `<strong>Merhaba!</strong> Ben Marmara Ziraat'in bahçe danışmanıyım. 🌱<br><br>
+
+Size <strong>bahçe ürünleri</strong>, <strong>bitki hastalıkları</strong>, <strong>gübre</strong>, <strong>tohum</strong> ve <strong>peyzaj</strong> konularında yardımcı olabilirim.<br><br>
+
+<strong>Yardımcı olabileceğim konular:</strong>
+<ul>
+<li>🌱 Bitki hastalıkları ve tedavi yöntemleri</li>
+<li>🌿 Gübre ve beslenme sorunları</li>
+<li>🌾 Çim ve tohum problemleri</li>
+<li>🌸 Bahçe düzenlemesi ve peyzaj</li>
+<li>🐛 Zararlı kontrolü ve ilaçlama</li>
+</ul>
+
+Bahçe ile ilgili sorularınız için bizimle iletişime geçebilirsiniz:<br>
+📞 <strong>(0212) 672 99 56</strong><br>
+📧 <strong>info@marmaraziraat.com</strong>`;
+
+        return NextResponse.json({ 
+          message: rejectionMessage,
+          timestamp: new Date().toISOString(),
+          rejected: true
+        });
+      }
+      
       const prompt = imageBase64 
         ? `${systemPrompt}\n\nKullanıcı resim gönderdi ve şunu soruyor: ${message}\n\nResimdeki bitki/bahçe sorunu hakkında analiz yap ve uygun ürün öner.`
         : `${systemPrompt}\n\nKullanıcı sorusu: ${message}`;

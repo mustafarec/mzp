@@ -423,6 +423,7 @@ export default function FloatingAIChat() {
                   <label
                     htmlFor="image-upload"
                     className="bg-gray-100 hover:bg-gray-200 disabled:bg-gray-300 text-gray-600 p-2 rounded cursor-pointer flex items-center justify-center"
+                    title="Bahçe ve bitki fotoğrafları yükleyin"
                   >
                     <ImageIcon className="h-4 w-4" />
                   </label>
@@ -437,7 +438,7 @@ export default function FloatingAIChat() {
                 </div>
               </div>
               <p className="text-xs text-muted-foreground mt-2 text-center">
-                🌱 AI Bahçe Danışmanı • Uzman Öneriler • Ürün Tavsiyeleri
+                🌱 AI Bahçe Danışmanı • Bitki hastalıkları, gübre, tohum ve peyzaj konularında uzman öneriler
               </p>
             </div>
           </CardContent>
