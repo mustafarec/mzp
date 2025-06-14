@@ -91,7 +91,7 @@ export default function HomePage() {
   const stats = [
     { number: "25+", label: "Yıllık Deneyim" },
     { number: "50K+", label: "Mutlu Müşteri" },
-    { number: "800+", label: "Bahçe Ürünü" },
+    { number: "1200+", label: "Bahçe Ürünü" },
     { number: "81", label: "İl Genelinde Hizmet" }
   ];
 

@@ -9,11 +9,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Package, Tag, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, Package, Tag, Calendar } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, doc, getDoc, limit } from 'firebase/firestore';
 
-// HTML etiketlerini temizleyen utility fonksiyon
+// HTML etiketlerini temizleyen ve akıllı paragraf oluşturan utility fonksiyon
 function stripHtml(html: string): string {
   // HTML etiketlerini kaldır
   const stripped = html.replace(/<[^>]*>/g, '');
@@ -29,6 +29,66 @@ function stripHtml(html: string): string {
     
   // Fazla boşlukları temizle
   return decoded.replace(/\s+/g, ' ').trim();
+}
+
+// Akıllı paragraf oluşturan fonksiyon
+function createSmartParagraphs(text: string): string {
+  if (!text) return '';
+  
+  // Önce HTML'i temizle
+  const cleanText = stripHtml(text);
+  
+  // Madde işaretlerini tespit et ve yeni satırlara böl
+  const bulletPatterns = /([•\-\*]\s+)/g;
+  if (bulletPatterns.test(cleanText)) {
+    // Madde işaretli liste varsa, her maddeyi yeni satıra böl
+    return cleanText
+      .replace(/([•\-\*]\s+)/g, '\n$1')
+      .replace(/^\n/, '') // Başlangıçtaki boş satırı kaldır
+      .trim();
+  }
+  
+  // Parantez içi kısaltmaları korumak için geçici işaretler koy
+  let processedText = cleanText;
+  
+  // Yaygın kısaltmaları tespit et ve koru
+  processedText = processedText.replace(/\(([^)]*(?:vb|vs|örn|etc)\.[^)]*)\)/g, '{{ABBREV_$1}}');
+  
+  // Diğer parantez içi ifadeleri koru (Fe, Zn, Cu, Mn gibi)
+  processedText = processedText.replace(/\(([A-Za-z0-9\s,]+)\)/g, '{{PAREN_$1}}');
+  
+  // Normal paragraf işlemi
+  const sentences = processedText
+    .split(/[.!?]+/)
+    .map(s => s.trim())
+    .filter(s => s.length > 10); // Çok kısa cümleleri filtrele
+  
+  if (sentences.length <= 2) {
+    // Geçici işaretleri geri çevir
+    return cleanText
+      .replace(/\{\{ABBREV_([^}]+)\}\}/g, '($1)')
+      .replace(/\{\{PAREN_([^}]+)\}\}/g, '($1)');
+  }
+  
+  // Her 2-3 cümleyi bir paragrafta grupla
+  const paragraphs = [];
+  for (let i = 0; i < sentences.length; i += 2) {
+    const paragraphSentences = sentences.slice(i, i + 2);
+    if (paragraphSentences.length > 0) {
+      // Cümle sonlarında nokta yoksa ekle
+      const formattedSentences = paragraphSentences.map(s => 
+        s.endsWith('.') || s.endsWith('!') || s.endsWith('?') ? s : s + '.'
+      );
+      paragraphs.push(formattedSentences.join(' '));
+    }
+  }
+  
+  const result = paragraphs.join('\n\n');
+  
+  // Geçici işaretleri geri çevir
+  return result
+    .replace(/\{\{ABBREV_([^}]+)\}\}/g, '($1)')
+    .replace(/\{\{PAREN_([^}]+)\}\}/g, '($1)');
 }
 
 async function getProductBySlug(slug: string): Promise<Product | null> {
@@ -107,16 +167,8 @@ async function getRelatedProducts(categoryId: string, currentProductId: string):
 }
 
 function DescriptionCard({ description }: { description: string }) {
-  const [isExpanded, setIsExpanded] = useState(false);
-  
-  // HTML etiketlerini temizle
-  const cleanDescription = stripHtml(description);
-  
-  const maxLength = 300;
-  const shouldTruncate = cleanDescription.length > maxLength;
-  const displayText = shouldTruncate && !isExpanded 
-    ? cleanDescription.substring(0, maxLength) + '...'
-    : cleanDescription;
+  // Akıllı paragraf oluştur
+  const smartDescription = createSmartParagraphs(description);
 
   return (
     <Card>
@@ -126,28 +178,8 @@ function DescriptionCard({ description }: { description: string }) {
       <CardContent>
         <div className="prose max-w-none">
           <p className="text-agriculture-600 font-body leading-relaxed whitespace-pre-wrap">
-            {displayText}
+            {smartDescription}
           </p>
-          {shouldTruncate && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="mt-2 p-0 h-auto text-agriculture-primary hover:text-agriculture-600"
-            >
-              {isExpanded ? (
-                <>
-                  <ChevronUp className="h-4 w-4 mr-1" />
-                  Daha Az Göster
-                </>
-              ) : (
-                <>
-                  <ChevronDown className="h-4 w-4 mr-1" />
-                  Devamını Oku
-                </>
-              )}
-            </Button>
-          )}
         </div>
       </CardContent>
     </Card>
@@ -237,11 +269,13 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
 
       {/* Back Button */}
       <div className="mb-6">
-        <Button variant="outline" asChild>
-          <Link href="/products" className="flex items-center gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Ürünlere Geri Dön
-          </Link>
+        <Button 
+          variant="outline" 
+          onClick={() => window.history.back()}
+          className="flex items-center gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Geri Dön
         </Button>
       </div>
 
@@ -304,6 +338,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
             </h1>
           </div>
 
+
           {/* Product Details */}
           <Card>
             <CardHeader>
@@ -344,10 +379,12 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
             </CardContent>
           </Card>
 
-          {/* Description */}
-          <DescriptionCard description={product.description} />
-
         </div>
+      </div>
+
+      {/* Product Description */}
+      <div className="mt-12">
+        <DescriptionCard description={product.description} />
       </div>
 
       {/* Related Products */}

@@ -19,9 +19,25 @@ export default function ProductsPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<string>('newest');
+  const [sortBy, setSortBy] = useState<string>('premium');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [isLoading, setIsLoading] = useState(true);
+
+  // Scroll pozisyonunu kaydet ve geri yükle
+  useEffect(() => {
+    const savedScrollPosition = sessionStorage.getItem('productsScrollPosition');
+    if (savedScrollPosition) {
+      setTimeout(() => {
+        window.scrollTo(0, parseInt(savedScrollPosition));
+        sessionStorage.removeItem('productsScrollPosition');
+      }, 100);
+    }
+  }, []);
+
+  const handleProductClick = () => {
+    // Scroll pozisyonunu kaydet
+    sessionStorage.setItem('productsScrollPosition', window.scrollY.toString());
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -32,7 +48,13 @@ export default function ProductsPage() {
         ]);
         
         const activeProducts = productsData.filter(product => product.isActive);
-        setProducts(activeProducts);
+        // Premium ürünleri önce sırala
+        const sortedProducts = activeProducts.sort((a, b) => {
+          if (a.isPremium && !b.isPremium) return -1;
+          if (!a.isPremium && b.isPremium) return 1;
+          return 0;
+        });
+        setProducts(sortedProducts);
         setCategories(categoriesData.filter(cat => cat.isActive));
       } catch (error) {
         console.error('Ürünler yüklenirken hata:', error);
@@ -60,6 +82,13 @@ export default function ProductsPage() {
     }
 
     switch (sortBy) {
+      case 'premium':
+        filtered.sort((a, b) => {
+          if (a.isPremium && !b.isPremium) return -1;
+          if (!a.isPremium && b.isPremium) return 1;
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        });
+        break;
       case 'newest':
         filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         break;
@@ -144,6 +173,7 @@ export default function ProductsPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="premium">Premium Önce</SelectItem>
               <SelectItem value="newest">En Yeni</SelectItem>
               <SelectItem value="oldest">En Eski</SelectItem>
               <SelectItem value="name">İsim (A-Z)</SelectItem>
@@ -163,41 +193,48 @@ export default function ProductsPage() {
       ) : (
         <div className="grid md:grid-cols-3 gap-6">
           {filteredProducts.map((product) => (
-            <Card key={product.id} className="product-card-hover border-0 shadow-lg bg-white overflow-hidden">
-              <div className="similar-product-container">
-                {product.images && product.images.length > 0 ? (
-                  <img
-                    src={product.images[0]}
-                    alt={product.name}
-                    className="similar-product-image"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                    <Package className="h-12 w-12 text-gray-300" />
-                  </div>
-                )}
-              </div>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg font-semibold text-gray-800 line-clamp-2">
-                  {product.name}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600 text-sm line-clamp-2 mb-4">
-                  {product.description?.replace(/<[^>]*>/g, '').slice(0, 80)}...
-                </p>
-                <div className="flex items-center justify-between mb-4">
-                  <Badge variant="outline" className="text-xs">
-                    {getCategoryName(product.categoryId)}
-                  </Badge>
+            <Link
+              key={product.id}
+              href={`/products/${product.slug}`}
+              className="group block"
+              onClick={handleProductClick}
+            >
+              <Card className="product-card-hover border-0 shadow-lg bg-white overflow-hidden h-full cursor-pointer transition-transform group-hover:scale-[1.02]">
+                <div className="similar-product-container">
+                  {product.images && product.images.length > 0 ? (
+                    <img
+                      src={product.images[0]}
+                      alt={product.name}
+                      className="similar-product-image"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                      <Package className="h-12 w-12 text-gray-300" />
+                    </div>
+                  )}
                 </div>
-                <Button asChild className="w-full bg-green-600 hover:bg-green-700" size="sm">
-                  <Link href={`/products/${product.slug}`}>
-                    Detayları Gör
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg font-semibold text-gray-800 line-clamp-2 group-hover:text-green-600 transition-colors">
+                    {product.name}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-600 text-sm line-clamp-2 mb-4">
+                    {product.description?.replace(/<[^>]*>/g, '').slice(0, 80)}...
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <Badge variant="outline" className="text-xs">
+                      {getCategoryName(product.categoryId)}
+                    </Badge>
+                    {product.isPremium && (
+                      <Badge className="text-xs bg-yellow-100 text-yellow-800">
+                        Premium ⭐
+                      </Badge>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
           ))}
         </div>
       )}
