@@ -38,8 +38,8 @@ export default function AdminLayout({
       console.log('🚪 Redirecting to login - no user');
       router.push('/admin/login');
     } else if (!loading && user && !isAdmin && adminEmails.length > 0) {
-      console.log('⛔ Redirecting to home - user not admin');
-      router.push('/');
+      console.log('⛔ Redirecting to login - user not admin');
+      router.push('/admin/login');
     }
   }, [user, isAdmin, loading, router, isLoginPage, adminEmails, pathname]);
 
@@ -61,7 +61,7 @@ export default function AdminLayout({
     return <AdminSetup currentUserEmail={user.email || undefined} />;
   }
 
-  if (!user || !isAdmin) {
+  if (!user || (!loading && !isAdmin && adminEmails.length > 0)) {
     return null;
   }
 

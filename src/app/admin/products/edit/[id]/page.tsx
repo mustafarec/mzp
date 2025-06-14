@@ -174,7 +174,7 @@ export default function EditProductPage() {
           title: 'Başarılı!',
           description: result.message,
         });
-        router.push('/admin/products');
+        // Otomatik yönlendirmeyi kaldır, kullanıcı manuel olarak geri dönebilir
       } else {
         toast({
           title: 'Hata!',

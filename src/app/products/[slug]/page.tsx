@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Package, Tag, Calendar, Share2, Eye, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, Package, Tag, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, doc, getDoc, limit } from 'firebase/firestore';
 
@@ -160,6 +160,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [slug, setSlug] = useState<string>('');
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   useEffect(() => {
     async function initParams() {
@@ -250,7 +251,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
           <div className="relative aspect-square max-w-md mx-auto overflow-hidden rounded-xl shadow-lg bg-white border border-agriculture-100">
             {product.images && product.images.length > 0 ? (
               <Image
-                src={product.images[0]}
+                src={product.images[activeImageIndex]}
                 alt={product.name}
                 fill
                 className="object-contain p-4"
@@ -267,11 +268,19 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
           {/* Thumbnail Gallery */}
           {product.images && product.images.length > 1 && (
             <div className="grid grid-cols-4 gap-2 max-w-md mx-auto">
-              {product.images.slice(1, 5).map((image, index) => (
-                <div key={index} className="relative aspect-square overflow-hidden rounded-lg shadow-sm bg-white border border-agriculture-100">
+              {product.images.slice(0, 4).map((image, index) => (
+                <div 
+                  key={index} 
+                  className={`relative aspect-square overflow-hidden rounded-lg shadow-sm bg-white border cursor-pointer transition-all duration-200 ${
+                    activeImageIndex === index 
+                      ? 'border-agriculture-500 ring-2 ring-agriculture-200' 
+                      : 'border-agriculture-100 hover:border-agriculture-300'
+                  }`}
+                  onClick={() => setActiveImageIndex(index)}
+                >
                   <Image
                     src={image}
-                    alt={`${product.name} - ${index + 2}`}
+                    alt={`${product.name} - ${index + 1}`}
                     fill
                     className="object-contain p-2 hover:scale-105 transition-transform duration-200"
                     sizes="80px"
@@ -338,17 +347,6 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
           {/* Description */}
           <DescriptionCard description={product.description} />
 
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4">
-            <Button className="flex-1 bg-agriculture-primary hover:bg-agriculture-600">
-              <Eye className="h-4 w-4 mr-2" />
-              Detaylı İnceleme
-            </Button>
-            <Button variant="outline" className="flex-1">
-              <Share2 className="h-4 w-4 mr-2" />
-              Paylaş
-            </Button>
-          </div>
         </div>
       </div>
 

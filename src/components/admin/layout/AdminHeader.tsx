@@ -17,8 +17,8 @@ export default function AdminHeader() {
   const [lastActivity, setLastActivity] = useState<Date>(new Date());
   const [sessionWarning, setSessionWarning] = useState(false);
 
-  const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 dakika
-  const WARNING_TIME = 5 * 60 * 1000; // 5 dakika uyarı
+  const SESSION_TIMEOUT = 5 * 60 * 1000; // 5 dakika
+  const WARNING_TIME = 1 * 60 * 1000; // 1 dakika uyarı
 
   useEffect(() => {
     const updateActivity = () => {
@@ -68,7 +68,7 @@ export default function AdminHeader() {
   const extendSession = () => {
     setLastActivity(new Date());
     setSessionWarning(false);
-    toast({ title: 'Oturum Uzatıldı!', description: 'Oturumunuz 30 dakika daha uzatıldı.' });
+    toast({ title: 'Oturum Uzatıldı!', description: 'Oturumunuz 5 dakika daha uzatıldı.' });
   };
 
   return (
@@ -111,7 +111,7 @@ export default function AdminHeader() {
             </div>
             <div className="ml-3">
               <p className="text-sm text-yellow-700">
-                Güvenlik nedeniyle oturumunuz 5 dakika içinde sonlanacak. 
+                Güvenlik nedeniyle oturumunuz 1 dakika içinde sonlanacak. 
                 <Button variant="link" onClick={extendSession} className="p-0 ml-1 h-auto">
                   Oturumu uzatmak için tıklayın.
                 </Button>

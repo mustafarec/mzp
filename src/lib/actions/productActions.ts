@@ -10,6 +10,16 @@ import { AddProductFormSchema } from "@/types";
 import { generateSlug } from "@/lib/utils";
 import { createCategoryIfNotExists } from "./categoryActions"; // Import schema from types
 
+// URL validation helper
+function isValidUrl(url: string): boolean {
+  try {
+    new URL(url);
+    return url.startsWith('http://') || url.startsWith('https://');
+  } catch {
+    return false;
+  }
+}
+
 // Activity logger helper
 async function logActivity(action: string, type: 'create' | 'update' | 'delete' = 'update', user: string = 'Admin') {
   try {
@@ -595,7 +605,10 @@ export async function smartBulkImport(
       const existingProduct = await getProductByName(excelProduct.İsim);
       
       const imageUrls = excelProduct['Resim URL']
-        ? excelProduct['Resim URL'].split(',').map(url => url.trim()).filter(url => url)
+        ? excelProduct['Resim URL']
+            .split(/[,;]/) // Hem virgül hem noktalı virgül desteği
+            .map(url => url.trim())
+            .filter(url => url && isValidUrl(url))
         : [];
 
       const categoryId = await createCategoryIfNotExists(excelProduct.Kategoriler);
@@ -619,11 +632,11 @@ export async function smartBulkImport(
           const hasNewImages = imageUrls.some(url => !existingImageSet.has(url));
           
           if (hasNewImages) {
-            // Yeni resimleri mevcut resimlere ekle (duplicate olmadan)
-            const mergedImages = Array.from(new Set([...existingProduct.images, ...imageUrls]));
+            // Excel'deki ilk resmi kapak resmi olarak kullan, sonra mevcut resimleri ekle
+            const mergedImages = Array.from(new Set([...imageUrls, ...existingProduct.images]));
             updateData.images = mergedImages;
             needsUpdate = true;
-            updateReasons.push('yeni resimler eklendi');
+            updateReasons.push('yeni resimler eklendi (Excel ilk resim kapak)');
           }
         }
 
@@ -704,8 +717,8 @@ export async function smartBulkImport(
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Bilinmeyen hata';
-      errors.push(`Satır ${i + 2}: ${errorMessage}`);
-      console.error(`❌ Ürün hatası: ${excelProduct.İsim} - ${errorMessage}`);
+      errors.push(`Satır ${i + 2}: ${excelProduct.İsim || 'Bilinmeyen ürün'} - ${errorMessage}`);
+      console.error(`❌ Ürün hatası: ${excelProduct.İsim || 'Bilinmeyen'} - ${errorMessage}`);
     }
   }
 

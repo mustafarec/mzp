@@ -45,6 +45,9 @@ export default function Header() {
             <span className="mx-8">⏰ Hafta içi & Cumartesi: 08:00-18:00 • Pazar: 09:00-16:00</span>
             <span className="mx-8">🌱 25+ Yıllık Deneyim • Bahçe Ürünleri & Peyzaj Çözümleri</span>
             <span className="mx-8">📞 (0212) 672 99 56 • 📧 info@marmaraziraat.com</span>
+            <span className="mx-8">⏰ Hafta içi & Cumartesi: 08:00-18:00 • Pazar: 09:00-16:00</span>
+            <span className="mx-8">🌱 25+ Yıllık Deneyim • Bahçe Ürünleri & Peyzaj Çözümleri</span>
+            <span className="mx-8">📞 (0212) 672 99 56 • 📧 info@marmaraziraat.com</span>
           </div>
         </div>
       </div>

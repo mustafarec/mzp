@@ -261,7 +261,7 @@ html {
 
   /* Marquee Animation */
   .animate-marquee {
-    animation: marquee 30s linear infinite;
+    animation: marquee 60s linear infinite;
   }
   
   @keyframes marquee {
@@ -269,7 +269,7 @@ html {
       transform: translateX(0%);
     }
     100% {
-      transform: translateX(-100%);
+      transform: translateX(-50%);
     }
   }
 
