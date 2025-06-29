@@ -103,7 +103,20 @@ html {
 
   .product-image-container {
     @apply relative w-full overflow-hidden rounded-lg bg-white;
-    height: 200px;
+    height: 140px; /* Mobile first approach */
+  }
+
+  /* Responsive image container heights */
+  @media (min-width: 640px) {
+    .product-image-container {
+      height: 160px; /* Tablet */
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .product-image-container {
+      height: 200px; /* Desktop */
+    }
   }
 
   .product-image {

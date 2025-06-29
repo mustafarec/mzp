@@ -252,20 +252,10 @@ const MobilePDFViewer: React.FC<MobilePDFViewerProps> = ({
         <div className="text-center p-6">
           <p className="text-red-600 mb-4">{error}</p>
           
-          <div className="flex flex-col sm:flex-row gap-2 justify-center">
+          <div className="flex justify-center">
             <Button variant="outline" onClick={retryLoad}>
               <RefreshCw className="mr-2 h-4 w-4" />
               Tekrar Dene
-            </Button>
-            
-            <Button onClick={openInNewTab} variant="outline">
-              <ExternalLink className="mr-2 h-4 w-4" />
-              Yeni Sekmede Aç
-            </Button>
-            
-            <Button onClick={downloadPDF}>
-              <Download className="mr-2 h-4 w-4" />
-              PDF İndir
             </Button>
           </div>
         </div>
@@ -292,57 +282,6 @@ const MobilePDFViewer: React.FC<MobilePDFViewerProps> = ({
         </div>
       )}
 
-      {/* Header Controls */}
-      {showControls && !loading && (
-        <div className="sticky top-0 z-20 bg-white border-b border-gray-200 p-3">
-          <div className="flex items-center justify-between">
-            {/* Left side - Title */}
-            <div className="flex items-center gap-2 flex-1 min-w-0">
-              <Badge variant="secondary" className="hidden sm:block">
-                {title.length > 30 ? `${title.substring(0, 30)}...` : title}
-              </Badge>
-              <Badge variant="outline" className="sm:hidden">
-                {title.length > 15 ? `${title.substring(0, 15)}...` : title}
-              </Badge>
-            </div>
-            
-            {/* Right side - Action buttons */}
-            <div className="flex items-center gap-1">
-              {!isMobile && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={toggleFullscreen}
-                  className="h-8 w-8 p-0"
-                >
-                  {isFullscreen ? 
-                    <Minimize className="h-3 w-3" /> : 
-                    <Maximize className="h-3 w-3" />
-                  }
-                </Button>
-              )}
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={openInNewTab}
-                className="h-8 w-8 p-0"
-              >
-                <ExternalLink className="h-3 w-3" />
-              </Button>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={downloadPDF}
-                className="h-8 w-8 p-0"
-              >
-                <Download className="h-3 w-3" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Zoom Controls - Fixed position (Desktop only) */}
       {!loading && !isMobile && (

@@ -4,7 +4,13 @@ import { useState, useEffect } from 'react';
 import { X, Package, Tag, Calendar, ChevronLeft, ChevronRight, Share2, ArrowRight } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Dialog, DialogPortal, DialogOverlay } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -207,106 +213,30 @@ export default function ProductDetailDialog({ open, onOpenChange, product, onPro
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogPortal>
-        {/* Custom overlay with blur effect - pointer events none to prevent scroll blocking */}
-        <DialogOverlay 
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
-          style={{ pointerEvents: 'none' }}
-        />
-        
-        {/* Custom content with iPhone-style animations */}
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ pointerEvents: 'none' }}
-        >
-          <div
-            className={cn(
-              "relative bg-white rounded-3xl shadow-2xl w-full h-full max-w-6xl max-h-[95vh] flex flex-col",
-              "data-[state=open]:animate-in data-[state=closed]:animate-out",
-              "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-              "data-[state=closed]:zoom-out-75 data-[state=open]:zoom-in-100",
-              "data-[state=closed]:slide-out-to-bottom-2 data-[state=open]:slide-in-from-bottom-2",
-              "duration-300 ease-out",
-              // Mobile: full screen with bottom slide animation
-              "sm:rounded-3xl sm:max-h-[95vh] sm:m-4",
-              "max-sm:rounded-t-3xl max-sm:rounded-b-none max-sm:h-full max-sm:max-h-none max-sm:m-0"
-            )}
-            style={{
-              transformOrigin: 'center bottom',
-              pointerEvents: 'auto' // Content'te pointer events aktif
-            }}
-            data-state={open ? 'open' : 'closed'}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b bg-white/95 backdrop-blur-sm sticky top-0 z-10 rounded-t-3xl">
-              <div className="flex-1 min-w-0">
-                <h2 className="text-lg font-semibold truncate">{product.name}</h2>
-                {category && (
-                  <p className="text-sm text-muted-foreground">{category.name}</p>
-                )}
-              </div>
-              
-              <div className="flex items-center gap-2 ml-4">
-                {/* Share button */}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={shareProduct}
-                  className="hidden sm:flex"
-                >
-                  <Share2 className="h-4 w-4" />
-                </Button>
-                
-                {/* Close button */}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onOpenChange(false)}
-                  className="ml-2"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
+      <DialogContent className="max-w-4xl max-h-[90vh] p-0 flex flex-col">
+        <DialogHeader className="p-6 pb-0">
+          <DialogTitle className="text-2xl font-bold text-left">
+            {product.name}
+          </DialogTitle>
+          {category && (
+            <DialogDescription className="text-left">
+              {category.name}
+            </DialogDescription>
+          )}
+        </DialogHeader>
 
-            {/* Main Content */}
-            <div 
-              className="flex-1 overflow-y-scroll overflow-x-hidden relative"
-              onScroll={handleScroll}
-              style={{
-                // Smooth scrolling for iOS
-                WebkitOverflowScrolling: 'touch',
-                // Custom scrollbar styling
-                scrollbarWidth: 'thin',
-                scrollbarColor: '#cbd5e1 transparent',
-                // Performance optimizations
-                willChange: 'scroll-position',
-                // Better momentum scrolling on mobile
-                overscrollBehavior: 'contain',
-                // Mouse wheel compatibility - auto for better mouse wheel support
-                touchAction: 'auto',
-                // Remove problematic CSS that might block scroll
-                // contain: 'layout style paint', // Kaldırıldı
-                // Ensure proper dimensions for scrolling
-                height: 'calc(100% - 80px)', // Header height'ı çıkar
-                maxHeight: '80vh',
-                position: 'relative'
-              }}
-            >
-              <div className="p-4 sm:p-6">
-                {/* Product Main Section */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 mb-8">
-                  {/* Image Gallery */}
-                  <div className="space-y-4">
-                    <div 
-                      className="relative aspect-square max-w-md mx-auto overflow-hidden rounded-xl shadow-lg bg-white border border-gray-100"
-                      style={{
-                        transform: `scale(${imageScale})`,
-                        transformOrigin: 'center center',
-                        transition: 'transform 0.05s cubic-bezier(0.4, 0, 0.2, 1)',
-                        willChange: 'transform'
-                      }}
-                    >
+        {/* Main Content - Scrollable Area */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-6" style={{
+          maxHeight: 'calc(90vh - 120px)', // Account for header and footer
+          scrollbarWidth: 'thin',
+          scrollbarColor: '#cbd5e1 transparent'
+        }}>
+          <div className="space-y-6 pb-4">
+            {/* Product Main Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+              {/* Image Gallery */}
+              <div className="space-y-4">
+                <div className="relative aspect-square max-w-md mx-auto overflow-hidden rounded-xl shadow-lg bg-white border border-gray-100">
                       {product.images && product.images.length > 0 ? (
                         <>
                           <Image
@@ -346,17 +276,9 @@ export default function ProductDetailDialog({ open, onOpenChange, product, onPro
                       )}
                     </div>
                     
-                    {/* Thumbnail Gallery */}
-                    {product.images && product.images.length > 1 && (
-                      <div 
-                        className="grid grid-cols-4 gap-2 max-w-md mx-auto"
-                        style={{
-                          transform: `scale(${imageScale})`,
-                          transformOrigin: 'center center',
-                          transition: 'transform 0.05s cubic-bezier(0.4, 0, 0.2, 1)',
-                          willChange: 'transform'
-                        }}
-                      >
+                {/* Thumbnail Gallery */}
+                {product.images && product.images.length > 1 && (
+                  <div className="grid grid-cols-4 gap-2 max-w-md mx-auto">
                         {product.images.slice(0, 4).map((image, index) => (
                           <div 
                             key={index} 
@@ -376,12 +298,12 @@ export default function ProductDetailDialog({ open, onOpenChange, product, onPro
                             />
                           </div>
                         ))}
-                      </div>
-                    )}
                   </div>
+                )}
+              </div>
 
-                  {/* Product Info */}
-                  <div className="space-y-6">
+              {/* Product Info */}
+              <div className="space-y-6">
                     <div>
                       {category && (
                         <Badge className="mb-3 bg-agriculture-100 text-agriculture-primary hover:bg-agriculture-200">
@@ -437,88 +359,88 @@ export default function ProductDetailDialog({ open, onOpenChange, product, onPro
                         )}
                       </CardContent>
                     </Card>
-                  </div>
-                </div>
-
-                {/* Product Description */}
-                <Card className="mb-8">
-                  <CardHeader>
-                    <CardTitle className="text-agriculture-primary">Ürün Açıklaması</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="prose max-w-none">
-                      <p className="text-agriculture-600 leading-relaxed whitespace-pre-wrap">
-                        {createSmartParagraphs(product.description)}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Related Products */}
-                {relatedProducts.length > 0 && (
-                  <div>
-                    <Separator className="mb-6" />
-                    <div className="mb-6">
-                      <h3 className="text-xl font-bold text-agriculture-primary mb-2">
-                        Benzer Ürünler
-                      </h3>
-                      <p className="text-agriculture-600 text-sm">
-                        Aynı kategoriden diğer ürünleri keşfedin
-                      </p>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {relatedProducts.map((relatedProduct) => (
-                        <Card key={relatedProduct.id} className="cursor-pointer hover:shadow-md transition-shadow">
-                          <div className="aspect-square relative bg-gray-50 rounded-t-lg overflow-hidden">
-                            {relatedProduct.images && relatedProduct.images.length > 0 ? (
-                              <Image
-                                src={relatedProduct.images[0]}
-                                alt={relatedProduct.name}
-                                fill
-                                className="object-contain p-2"
-                                sizes="200px"
-                              />
-                            ) : (
-                              <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                                <Package className="h-8 w-8 text-gray-300" />
-                              </div>
-                            )}
-                          </div>
-                          <CardContent className="p-3">
-                            <h4 className="font-semibold text-sm line-clamp-2 mb-2">
-                              {relatedProduct.name}
-                            </h4>
-                            <p className="text-xs text-gray-600 line-clamp-2 mb-3">
-                              {stripHtml(relatedProduct.description).slice(0, 60)}...
-                            </p>
-                            <Button 
-                              size="sm" 
-                              className="w-full text-xs"
-                              onClick={() => handleRelatedProductClick(relatedProduct)}
-                            >
-                              Detayları Gör
-                              <ArrowRight className="ml-1 h-3 w-3" />
-                            </Button>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
 
-            {/* Mobile share button */}
-            <div className="sm:hidden flex justify-center p-4 bg-white border-t sticky bottom-0 z-10">
-              <Button variant="outline" onClick={shareProduct} className="flex-1">
-                <Share2 className="mr-2 h-4 w-4" />
-                Paylaş
-              </Button>
-            </div>
+            {/* Product Description */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-agriculture-primary">Ürün Açıklaması</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="prose max-w-none">
+                  <p className="text-agriculture-600 leading-relaxed whitespace-pre-wrap">
+                    {createSmartParagraphs(product.description)}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Related Products */}
+            {relatedProducts.length > 0 && (
+              <div>
+                <Separator className="mb-6" />
+                <div className="mb-6">
+                  <h3 className="text-xl font-bold text-agriculture-primary mb-2">
+                    Benzer Ürünler
+                  </h3>
+                  <p className="text-agriculture-600 text-sm">
+                    Aynı kategoriden diğer ürünleri keşfedin
+                  </p>
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {relatedProducts.map((relatedProduct) => (
+                    <Card key={relatedProduct.id} className="cursor-pointer hover:shadow-md transition-shadow">
+                      <div className="aspect-square relative bg-gray-50 rounded-t-lg overflow-hidden">
+                        {relatedProduct.images && relatedProduct.images.length > 0 ? (
+                          <Image
+                            src={relatedProduct.images[0]}
+                            alt={relatedProduct.name}
+                            fill
+                            className="object-contain p-2"
+                            sizes="200px"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                            <Package className="h-8 w-8 text-gray-300" />
+                          </div>
+                        )}
+                      </div>
+                      <CardContent className="p-3">
+                        <h4 className="font-semibold text-sm line-clamp-2 mb-2">
+                          {relatedProduct.name}
+                        </h4>
+                        <p className="text-xs text-gray-600 line-clamp-2 mb-3">
+                          {stripHtml(relatedProduct.description).slice(0, 60)}...
+                        </p>
+                        <Button 
+                          size="sm" 
+                          className="w-full text-xs"
+                          onClick={() => handleRelatedProductClick(relatedProduct)}
+                        >
+                          Detayları Gör
+                          <ArrowRight className="ml-1 h-3 w-3" />
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
-      </DialogPortal>
+        
+        {/* Footer with share button - Fixed at bottom */}
+        <div className="border-t bg-white p-4 mt-auto">
+          <div className="flex justify-center">
+            <Button variant="outline" onClick={shareProduct}>
+              <Share2 className="mr-2 h-4 w-4" />
+              Paylaş
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
     </Dialog>
   );
 }

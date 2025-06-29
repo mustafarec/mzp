@@ -270,7 +270,7 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6 mb-12">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-3 sm:gap-6 mb-12">
               {products.map((product) => (
                 <div
                   key={product.id}
@@ -291,18 +291,18 @@ export default function HomePage() {
                         </div>
                       )}
                     </div>
-                    <div className="p-4">
-                      <h3 className="text-lg font-semibold text-gray-800 mb-2 line-clamp-2">
+                    <div className="p-2 sm:p-4">
+                      <h3 className="text-sm sm:text-lg font-semibold text-gray-800 mb-1 sm:mb-2 line-clamp-2">
                         {product.name}
                       </h3>
-                      <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                      <p className="text-gray-600 text-xs sm:text-sm mb-2 sm:mb-3 line-clamp-2">
                         {product.description?.replace(/<[^>]*>/g, '').slice(0, 100)}...
                       </p>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-green-600 font-medium">
+                        <span className="text-xs sm:text-sm text-green-600 font-medium">
                           Premium Ürün
                         </span>
-                        <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
+                        <span className="text-xs bg-yellow-100 text-yellow-800 px-1 sm:px-2 py-1 rounded-full">
                           Premium ⭐
                         </span>
                       </div>
@@ -345,7 +345,7 @@ export default function HomePage() {
 
             {catalogs.length > 0 ? (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-12">
                   {catalogs.map((catalog) => (
                     <div
                       key={catalog.id}
@@ -354,7 +354,7 @@ export default function HomePage() {
                     >
                       <div className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden apple-card-hover">
                         {/* Thumbnail */}
-                        <div className="relative aspect-[3/4] bg-gray-100 overflow-hidden">
+                        <div className="relative aspect-[4/5] sm:aspect-[3/4] bg-gray-100 overflow-hidden">
                           {catalog.thumbnailUrl ? (
                             <Image
                               src={catalog.thumbnailUrl}
@@ -369,7 +369,7 @@ export default function HomePage() {
                           )}
                           
                           {/* Brand Badge */}
-                          <div className="absolute top-3 left-3">
+                          <div className="absolute top-2 sm:top-3 left-2 sm:left-3">
                             <Badge variant="secondary" className="bg-white/90 backdrop-blur-sm text-xs">
                               {catalog.brand}
                             </Badge>
@@ -377,21 +377,21 @@ export default function HomePage() {
                         </div>
 
                         {/* Content */}
-                        <div className="p-4">
-                          <h3 className="text-lg font-semibold text-gray-800 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">
+                        <div className="p-2 sm:p-4">
+                          <h3 className="text-sm sm:text-lg font-semibold text-gray-800 mb-1 sm:mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">
                             {catalog.title}
                           </h3>
-                          <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                          <p className="text-gray-600 text-xs sm:text-sm mb-2 sm:mb-3 line-clamp-2">
                             {catalog.description || 'Ürün katalogunu inceleyin'}
                           </p>
                           <div className="flex items-center justify-between">
                             <div className="flex items-center text-xs text-gray-500">
-                              <BookOpen className="h-4 w-4 mr-1" />
-                              {catalog.pageCount ? `${catalog.pageCount} sayfa` : 'PDF Katalog'}
+                              <BookOpen className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                              {catalog.pageCount ? `${catalog.pageCount} sayfa` : 'PDF'}
                             </div>
-                            <div className="flex items-center text-blue-600 text-sm font-medium group-hover:translate-x-1 transition-transform">
+                            <div className="flex items-center text-blue-600 text-xs sm:text-sm font-medium group-hover:translate-x-1 transition-transform">
                               Görüntüle
-                              <ArrowRight className="h-4 w-4 ml-1" />
+                              <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1" />
                             </div>
                           </div>
                         </div>

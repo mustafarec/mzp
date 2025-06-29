@@ -222,16 +222,16 @@ export default function CatalogsPage() {
           </p>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4">
           {filteredCatalogs.map((catalog) => (
             <Card 
               key={catalog.id} 
               className="group hover:shadow-lg transition-all duration-300 cursor-pointer"
               onClick={(e) => handleViewCatalog(catalog, e)}
             >
-              <CardHeader className="pb-3">
+              <CardHeader className="p-2 sm:p-3">
                 {/* Thumbnail */}
-                <div className="relative aspect-[4/5] mb-3 overflow-hidden rounded-lg bg-gray-100 cursor-pointer">
+                <div className="relative aspect-[3/4] sm:aspect-[4/3] overflow-hidden rounded-lg bg-gray-100 cursor-pointer">
                     {catalog.thumbnailUrl ? (
                       <Image
                         src={catalog.thumbnailUrl}
@@ -246,16 +246,16 @@ export default function CatalogsPage() {
                     )}
                     
                     {/* Brand Badge */}
-                    <div className="absolute top-2 left-2 z-10">
-                      <Badge variant="secondary" className="bg-white/90 backdrop-blur-sm">
+                    <div className="absolute top-1 sm:top-2 left-1 sm:left-2 z-10">
+                      <Badge variant="secondary" className="bg-white/90 backdrop-blur-sm text-xs">
                         {catalog.brand}
                       </Badge>
                     </div>
 
                     {/* Category Badge */}
                     {catalog.category && (
-                      <div className="absolute top-2 right-2 z-10">
-                        <Badge variant="outline" className="bg-white/90 backdrop-blur-sm">
+                      <div className="absolute top-1 sm:top-2 right-1 sm:right-2 z-10">
+                        <Badge variant="outline" className="bg-white/90 backdrop-blur-sm text-xs">
                           {catalog.category}
                         </Badge>
                       </div>
@@ -263,12 +263,12 @@ export default function CatalogsPage() {
                     
                     {/* Hover overlay */}
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
-                      <Eye className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      <Eye className="h-6 w-6 sm:h-8 sm:w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     </div>
                   </div>
 
-                <div>
-                  <CardTitle className="line-clamp-2 mb-1 text-sm hover:text-blue-600 transition-colors cursor-pointer">
+                <div className="mt-2">
+                  <CardTitle className="line-clamp-2 mb-1 text-xs sm:text-sm hover:text-blue-600 transition-colors cursor-pointer">
                     {catalog.title}
                   </CardTitle>
                   {catalog.description && (
@@ -281,7 +281,7 @@ export default function CatalogsPage() {
 
               <CardContent className="pt-0">
                 {/* Info */}
-                <div className="grid grid-cols-2 gap-1 text-xs text-muted-foreground mb-3">
+                <div className="grid grid-cols-2 gap-1 text-xs text-muted-foreground mb-2 sm:mb-3">
                   <span>{formatFileSize(catalog.fileSize)}</span>
                   {catalog.pageCount && (
                     <span className="text-right">{catalog.pageCount} sayfa</span>
@@ -301,7 +301,7 @@ export default function CatalogsPage() {
                   <Button 
                     variant="outline" 
                     size="sm"
-                    className="px-2"
+                    className="px-1 sm:px-2"
                     onClick={() => {
                       const link = document.createElement('a');
                       link.href = catalog.pdfUrl;

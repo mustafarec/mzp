@@ -111,32 +111,12 @@ export default function PDFViewerDialog({ open, onOpenChange, catalog }: PDFView
                 <p className="text-sm text-muted-foreground">{catalog.brand}</p>
               </div>
               
-              <div className="flex items-center gap-2 ml-4">
-                {/* Share button */}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={shareCatalog}
-                  className="hidden sm:flex"
-                >
-                  <Share2 className="h-4 w-4" />
-                </Button>
-                
-                {/* Download button */}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={downloadPDF}
-                >
-                  <Download className="h-4 w-4" />
-                </Button>
-                
+              <div className="flex items-center ml-4">
                 {/* Close button */}
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => onOpenChange(false)}
-                  className="ml-2"
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -155,17 +135,6 @@ export default function PDFViewerDialog({ open, onOpenChange, catalog }: PDFView
               </div>
             </div>
 
-            {/* Mobile action buttons */}
-            <div className="sm:hidden flex justify-center gap-4 p-4 bg-white border-t">
-              <Button variant="outline" onClick={shareCatalog} className="flex-1">
-                <Share2 className="mr-2 h-4 w-4" />
-                Paylaş
-              </Button>
-              <Button onClick={downloadPDF} className="flex-1">
-                <Download className="mr-2 h-4 w-4" />
-                İndir
-              </Button>
-            </div>
           </div>
         </div>
       </DialogPortal>
