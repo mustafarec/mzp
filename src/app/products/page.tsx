@@ -521,19 +521,11 @@ export default function ProductsPage() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="px-3 md:px-6 pb-3 md:pb-6">
-                      <p className="text-gray-600 text-xs md:text-sm line-clamp-2 mb-2 md:mb-4">
-                        {product.description?.replace(/<[^>]*>/g, '').slice(0, 80)}...
-                      </p>
-                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-1 md:gap-0">
-                        <Badge variant="outline" className="text-xs w-fit">
-                          {getCategoryName(product.categoryId)}
+                      {product.isPremium && (
+                        <Badge className="text-xs bg-yellow-100 text-yellow-800 w-fit">
+                          Premium ⭐
                         </Badge>
-                        {product.isPremium && (
-                          <Badge className="text-xs bg-yellow-100 text-yellow-800 w-fit">
-                            Premium ⭐
-                          </Badge>
-                        )}
-                      </div>
+                      )}
                     </CardContent>
                   </Card>
                 </div>
@@ -565,22 +557,14 @@ export default function ProductsPage() {
                       <div className="flex-1 p-3 sm:p-6">
                         <div className="flex flex-col">
                           <div className="flex-1">
-                            <CardTitle className="text-sm sm:text-xl font-semibold text-gray-800 line-clamp-2 group-hover:text-green-600 transition-colors mb-1 sm:mb-2">
+                            <CardTitle className="text-sm sm:text-xl font-semibold text-gray-800 line-clamp-2 group-hover:text-green-600 transition-colors mb-2">
                               {product.name}
                             </CardTitle>
-                            <p className="text-gray-600 text-xs sm:text-sm line-clamp-2 sm:line-clamp-3 mb-2 sm:mb-4">
-                              {product.description?.replace(/<[^>]*>/g, '').slice(0, 150)}...
-                            </p>
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-                              <Badge variant="outline" className="text-xs w-fit">
-                                {getCategoryName(product.categoryId)}
+                            {product.isPremium && (
+                              <Badge className="text-xs bg-yellow-100 text-yellow-800 w-fit">
+                                Premium ⭐
                               </Badge>
-                              {product.isPremium && (
-                                <Badge className="text-xs bg-yellow-100 text-yellow-800 w-fit">
-                                  Premium ⭐
-                                </Badge>
-                              )}
-                            </div>
+                            )}
                           </div>
                         </div>
                       </div>
