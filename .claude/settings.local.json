@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run typecheck:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run build:*)",
+      "Bash(rm:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(cp:*)",
+      "Bash(find:*)",
+      "Bash(ls:*)",
+      "Bash(npm run lint)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__get-library-docs",
+      "Bash(git add:*)",
+      "Bash(git push:*)",
+      "Bash(pkill:*)",
+      "Bash(grep:*)"
+    ],
+    "deny": []
+  }
+}
