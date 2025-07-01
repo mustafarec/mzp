@@ -236,10 +236,6 @@ const PDFFlipBook = forwardRef<any, PDFFlipBookProps>(({
       setLoading(false);
       
       // Log for debugging
-      console.log('PDF conversion completed:', {
-        totalPages: convertedPages.length,
-        pages: convertedPages.length
-      });
     } catch (err) {
       console.error('PDF conversion error:', err);
       setError('PDF dosyası yüklenemedi. Lütfen tekrar deneyin.');
@@ -256,7 +252,6 @@ const PDFFlipBook = forwardRef<any, PDFFlipBookProps>(({
 
   // Navigation functions
   const nextPage = () => {
-    console.log('NextPage clicked:', currentPage, totalPages);
     const currentPageToCheck = isFullscreen ? fullscreenCurrentPage : currentPage;
     if (currentPageToCheck < totalPages - 1) {
       try {
@@ -268,7 +263,6 @@ const PDFFlipBook = forwardRef<any, PDFFlipBookProps>(({
         } else if (book.current?.pageFlip) {
           book.current.pageFlip().flipNext();
         }
-        console.log('FlipNext called successfully');
       } catch (error) {
         console.error('Error in flipNext:', error);
         // Fallback: manually increment page
@@ -470,12 +464,10 @@ const PDFFlipBook = forwardRef<any, PDFFlipBookProps>(({
               maxHeight={dimensions.height}
               showCover={true}
               onInit={(e: any) => {
-                console.log('HTMLFlipBook initialized:', e);
                 const pageCount = e?.object?.getPageCount?.() || pages.length || 0;
                 setTotalPages(pageCount);
               }}
               onFlip={(e: any) => {
-                console.log('Page flipped:', e);
                 const pageNum = typeof e?.data === 'number' ? e.data : 0;
                 setFullscreenCurrentPage(pageNum);
               }}
@@ -583,12 +575,10 @@ const PDFFlipBook = forwardRef<any, PDFFlipBookProps>(({
               maxHeight={dimensions.height}
               showCover={true}
               onInit={(e: any) => {
-                console.log('HTMLFlipBook normal mode initialized:', e);
                 const pageCount = e?.object?.getPageCount?.() || pages.length || 0;
                 setTotalPages(pageCount);
               }}
               onFlip={(e: any) => {
-                console.log('Page flipped normal mode:', e);
                 const pageNum = typeof e?.data === 'number' ? e.data : 0;
                 setCurrentPage(pageNum);
                 onPageChange?.(pageNum);

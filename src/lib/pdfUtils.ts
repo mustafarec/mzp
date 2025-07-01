@@ -375,12 +375,10 @@ export async function convertPDFWithCache(
 
   // Cache'de var mı kontrol et
   if (cache.has(cacheKey)) {
-    console.log('PDF cache hit:', cacheKey);
     return cache.get(cacheKey)!;
   }
 
   // Cache'de yoksa convert et ve cache'le
-  console.log('PDF cache miss, converting:', cacheKey);
   const pages = await convertPDFToImages(pdfUrl, options);
   cache.set(cacheKey, pages);
   

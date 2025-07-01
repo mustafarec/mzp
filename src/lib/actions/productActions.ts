@@ -40,7 +40,6 @@ function safeJsonParse<T>(jsonString: string | undefined, defaultValue: T): T {
   try {
     return JSON.parse(jsonString) as T;
   } catch (error) {
-    console.warn("Failed to parse JSON string for complex field:", error);
     return defaultValue; // Return default or an empty array/object on error
   }
 }
@@ -694,10 +693,8 @@ export async function smartBulkImport(
         if (needsUpdate) {
           await updateExistingProduct(existingProduct.id, updateData);
           updated++;
-          console.log(`✅ Ürün güncellendi: ${excelProduct.İsim} (${updateReasons.join(', ')})`);
         } else {
           skipped++;
-          console.log(`⏭️ Ürün atlandı: ${excelProduct.İsim} (değişiklik yok)`);
         }
       } else {
         const product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'> = {
@@ -713,7 +710,6 @@ export async function smartBulkImport(
 
         await createProduct(product);
         created++;
-        console.log(`🆕 Yeni ürün eklendi: ${excelProduct.İsim}`);
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Bilinmeyen hata';

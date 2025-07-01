@@ -24,8 +24,6 @@ import {
   X,
   Star
 } from 'lucide-react';
-import Carousel from '@/components/ui/Carousel';
-import DynamicSlider from '@/components/ui/DynamicSlider';
 import PDFViewerDialog from '@/components/ui/PDFViewerDialog';
 import { getCatalogs } from '@/lib/actions/catalogActions';
 import type { Catalog } from '@/types';
@@ -108,13 +106,6 @@ export default function CatalogsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* Dynamic Slider */}
-      <DynamicSlider 
-        position="catalogs-top"
-        showTitle={true}
-        className="mb-12"
-        fallback={null}
-      />
       
       {/* Header */}
       <div className="text-center mb-12">

@@ -46,11 +46,9 @@ const initializeFirebase = (): FirebaseApp => {
 
     validateConfig();
 
-    console.log('🔥 Firebase initialize ediliyor...', firebaseConfig.projectId);
 
     firebaseApp = initializeApp(firebaseConfig);
     isInitialized = true;
-    console.log('✅ Firebase initialized');
     return firebaseApp;
     
   } catch (error) {

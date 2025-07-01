@@ -46,7 +46,6 @@ export function cleanCategoryName(categoryName: string): string {
     const regex = new RegExp(`^${prefix}\\s+`, 'i');
     if (regex.test(cleanName)) {
       cleanName = cleanName.replace(regex, '').trim();
-      console.log(`🧹 Önek temizlendi: "${categoryName}" → "${cleanName}"`);
       break; // İlk eşleşen öneki temizle
     }
   }
@@ -136,7 +135,6 @@ export async function addCategory(formData: FormData) {
     // Activity log
     await logActivity(`Yeni kategori eklendi: "${data.name}"`, 'create');
     
-    console.log('Kategori eklendi:', docRef.id);
     return {
       message: 'Kategori başarıyla eklendi.',
       success: true
@@ -280,7 +278,6 @@ export async function updateCategory(id: string, formData: FormData) {
     // Activity log
     await logActivity(`Kategori güncellendi: "${data.name}"`, 'update');
     
-    console.log('Kategori güncellendi:', id);
     return {
       message: 'Kategori başarıyla güncellendi.',
       success: true
@@ -335,7 +332,6 @@ export async function deleteCategory(id: string) {
     // Activity log
     await logActivity(`Kategori silindi: "${categoryName}"`, 'delete');
     
-    console.log('Kategori silindi:', id);
     return {
       message: 'Kategori başarıyla silindi.',
       success: true
@@ -472,19 +468,16 @@ function mapToMainCategory(categoryName: string): string {
   for (const [mainCategory, keywords] of Object.entries(CATEGORY_MAPPINGS)) {
     // Tam eşleşme kontrolü
     if (keywords.some(keyword => normalizeText(keyword) === normalized)) {
-      console.log(`📂 Kategori eşleşti: "${categoryName}" → "${mainCategory}"`);
       return mainCategory;
     }
     
     // Kısmi eşleşme kontrolü (kategori adı keyword içeriyorsa)
     if (keywords.some(keyword => normalized.includes(normalizeText(keyword)) || normalizeText(keyword).includes(normalized))) {
-      console.log(`📂 Kategori kısmi eşleşti: "${categoryName}" → "${mainCategory}"`);
       return mainCategory;
     }
   }
   
   // Eşleşme bulunamadı, orijinal kategori adını döndür
-  console.log(`📂 Yeni kategori: "${categoryName}"`);
   return categoryName;
 }
 
@@ -502,7 +495,6 @@ export async function createCategoryIfNotExists(categoryName: string): Promise<s
     
     if (existingCategory) {
       if (mappedCategoryName !== categoryName.trim()) {
-        console.log(`✅ Kategori mevcut ana kategoriye yönlendirildi: "${categoryName}" → "${mappedCategoryName}"`);
       }
       return existingCategory.id;
     }
@@ -524,7 +516,6 @@ export async function createCategoryIfNotExists(categoryName: string): Promise<s
     const docRef = await addDoc(collection(db, 'categories'), categoryData);
     
     await logActivity(`Otomatik kategori oluşturuldu: "${mappedCategoryName}"`, 'create');
-    console.log(`🆕 Yeni kategori oluşturuldu: "${mappedCategoryName}"`);
     
     return docRef.id;
   } catch (error) {
@@ -545,7 +536,6 @@ export async function consolidateCategories(): Promise<{
     let deleted = 0;
     const errors: string[] = [];
     
-    console.log(`🔄 Kategori konsolidasyonu başlıyor... Toplam kategori: ${allCategories.length}`);
     
     for (const category of allCategories) {
       try {
@@ -574,7 +564,6 @@ export async function consolidateCategories(): Promise<{
             
             const docRef = await addDoc(collection(db, 'categories'), categoryData);
             mainCategory = { id: docRef.id, ...categoryData } as Category;
-            console.log(`🆕 Ana kategori oluşturuldu: "${mappedName}"`);
           }
           
           // Bu kategorideki tüm ürünleri ana kategoriye taşı
@@ -596,7 +585,6 @@ export async function consolidateCategories(): Promise<{
           await deleteDoc(doc(db, 'categories', category.id));
           
           merged++;
-          console.log(`✅ Kategori birleştirildi: "${category.name}" → "${mappedName}" (${productsSnapshot.size} ürün taşındı)`);
         }
       } catch (error) {
         const errorMsg = `Kategori "${category.name}" birleştirilemedi: ${error}`;
@@ -618,7 +606,6 @@ export async function consolidateCategories(): Promise<{
         if (productsSnapshot.empty) {
           await deleteDoc(doc(db, 'categories', category.id));
           deleted++;
-          console.log(`🗑️ Boş kategori silindi: "${category.name}"`);
         }
       } catch (error) {
         const errorMsg = `Boş kategori "${category.name}" silinemedi: ${error}`;
@@ -629,7 +616,6 @@ export async function consolidateCategories(): Promise<{
     
     await logActivity(`Kategori konsolidasyonu tamamlandı: ${merged} birleştirildi, ${deleted} silindi`, 'update');
     
-    console.log(`✅ Kategori konsolidasyonu tamamlandı: ${merged} birleştirildi, ${deleted} boş kategori silindi`);
     
     return { merged, deleted, errors };
   } catch (error) {
@@ -650,7 +636,6 @@ export async function updateCategoryDisplayNames(): Promise<{
     let analyzed = 0;
     const errors: string[] = [];
     
-    console.log(`🔄 Kategori displayName güncelleme başlıyor... Toplam kategori: ${allCategories.length}`);
     
     for (const category of allCategories) {
       try {
@@ -668,13 +653,10 @@ export async function updateCategoryDisplayNames(): Promise<{
           });
           
           updated++;
-          console.log(`✅ DisplayName güncellendi: "${category.name}" → "${newDisplayName}"`);
           
           if (hasCategoryPrefix(category.name)) {
-            console.log(`   🏷️  Önek tespit edildi: "${category.name}"`);
           }
         } else {
-          console.log(`⏭️  Değişiklik yok: "${category.name}"`);
         }
         
       } catch (error) {
@@ -686,7 +668,6 @@ export async function updateCategoryDisplayNames(): Promise<{
     
     await logActivity(`Kategori displayName güncelleme tamamlandı: ${updated}/${analyzed} kategori güncellendi`, 'update');
     
-    console.log(`✅ DisplayName güncelleme tamamlandı: ${updated}/${analyzed} kategori güncellendi`);
     
     return { updated, analyzed, errors };
   } catch (error) {

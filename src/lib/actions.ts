@@ -54,7 +54,6 @@ export async function handleContactFormSubmit(prevState: any, formData: FormData
       };
     }
 
-    console.log("Email sent successfully:", emailResult.data);
     return { 
       message: "Mesajınız başarıyla gönderildi. En kısa sürede sizinle iletişime geçeceğiz.", 
       success: true 
@@ -85,7 +84,6 @@ export async function handleNewsletterSignup(prevState: any, formData: FormData)
   const data: NewsletterFormData = validatedFields.data;
 
   // Simulate saving to a database
-  console.log("Newsletter signup:", data.email);
   // In a real app, you would save this to Firestore or a mailing list service.
   
   return { message: "Bültenimize başarıyla kaydoldunuz!", success: true };

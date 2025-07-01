@@ -23,7 +23,6 @@ async function checkProducts() {
       });
     });
     
-    console.log('=== TOPLAM ÜRÜN SAYISI:', products.length, '===\n');
     
     // Çiçek/hastalık ile ilgili ürünleri bul
     const flowerProducts = products.filter(p => {
@@ -38,13 +37,9 @@ async function checkProducts() {
              text.includes('besini');
     });
     
-    console.log('=== ÇİÇEK/HASTALIKLARA UYGUN ÜRÜNLER ===');
     flowerProducts.forEach((p, i) => {
-      console.log(`${i+1}. ${p.name}`);
       if (p.description) {
-        console.log(`   Açıklama: ${p.description.substring(0, 100)}...`);
       }
-      console.log('');
     });
     
   } catch(error) {

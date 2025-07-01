@@ -29,11 +29,6 @@ const navigation = [
     icon: Layout,
   },
   {
-    name: 'Slider Yönetimi',
-    href: '/admin/sliders',
-    icon: Images,
-  },
-  {
     name: 'Medya Kütüphanesi',
     href: '/admin/media',
     icon: ImageIcon,

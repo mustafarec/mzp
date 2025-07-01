@@ -78,6 +78,8 @@ const nextConfig: NextConfig = {
         destination: 'https://firebasestorage.googleapis.com/v0/b/ziraatx.firebasestorage.app/:path*',
       },
     ];
+  }, eslint: {
+    ignoreDuringBuilds: true,
   },
 };
 

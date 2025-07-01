@@ -9,8 +9,6 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, Filter, Grid, List, Package, ChevronDown, ChevronUp } from 'lucide-react';
-import Carousel from '@/components/ui/Carousel';
-import DynamicSlider from '@/components/ui/DynamicSlider';
 import ProductDetailDialog from '@/components/ui/ProductDetailDialog';
 import { Pagination, PaginationInfo, ItemsPerPageSelector } from '@/components/ui/pagination';
 import { getAllProducts } from '@/lib/actions/productActions';
@@ -277,12 +275,6 @@ export default function ProductsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <DynamicSlider 
-        position="products-top"
-        showTitle={true}
-        className="mb-12"
-        fallback={null}
-      />
       
       <div className="mb-6 products-section">
         <h1 className="text-3xl font-bold mb-4">Tüm Ürünler</h1>

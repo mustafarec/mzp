@@ -27,7 +27,6 @@ export default function FirebaseDebug() {
       appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
     };
 
-    console.log('Firebase Config:', config);
     
     const missingKeys = Object.entries(config)
       .filter(([key, value]) => !value)
@@ -71,7 +70,6 @@ export default function FirebaseDebug() {
     setLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      console.log('User created:', userCredential.user);
       
       toast({
         title: 'Başarılı!',

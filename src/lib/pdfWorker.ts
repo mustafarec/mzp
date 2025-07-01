@@ -17,7 +17,6 @@ export async function initializePDFWorker() {
     if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
       pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.js`;
       workerInitialized = true;
-      console.log('PDF.js worker initialized:', pdfjsLib.GlobalWorkerOptions.workerSrc);
     }
   } catch (error) {
     console.error('Failed to initialize PDF.js worker:', error);

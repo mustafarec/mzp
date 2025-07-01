@@ -15,7 +15,8 @@
       "Bash(git add:*)",
       "Bash(git push:*)",
       "Bash(pkill:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(rg:*)"
     ],
     "deny": []
   }

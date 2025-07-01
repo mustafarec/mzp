@@ -247,8 +247,6 @@ Bahçe ile ilgili sorularınız için bizimle iletişime geçebilirsiniz:<br>
     const products = await getAllActiveProducts();
     const systemPrompt = createSystemPrompt(products, conversationHistory);
     
-    console.log('💬 Conversation history length:', conversationHistory.length);
-    console.log('📝 Current message:', message);
     
     // Build content parts
     const parts: any[] = [];
@@ -370,8 +368,6 @@ Bahçe ile ilgili sorularınız için bizimle iletişime geçebilirsiniz:<br>
       });
     }
 
-    console.log('🚀 Sending to AI API, parts count:', parts.length);
-    console.log('🎯 System prompt preview:', systemPrompt.substring(0, 200) + '...');
 
     const response = await fetch(`${API_URL}?key=${GOOGLE_AI_API_KEY}`, {
       method: 'POST',
@@ -401,8 +397,6 @@ Bahçe ile ilgili sorularınız için bizimle iletişime geçebilirsiniz:<br>
     }
 
     const aiResponse = data.candidates[0].content.parts[0].text;
-    console.log('✅ AI response received, length:', aiResponse.length);
-    console.log('🎯 Response preview:', aiResponse.substring(0, 150) + '...');
 
     try {
       const sessionData = {

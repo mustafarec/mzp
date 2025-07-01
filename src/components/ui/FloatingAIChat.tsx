@@ -303,9 +303,6 @@ export default function FloatingAIChat() {
       setMessages(prev => [...prev, aiResponse]);
     } catch (error) {
       console.error('❌ AI Chat Error:', error);
-      console.log('📊 Messages sent count:', messages.length);
-      console.log('📝 Question sent:', question);
-      console.log('🖼️ Images sent:', imagesToSend.length);
       
       const errorResponse: Message = {
         id: (Date.now() + 1).toString(),

@@ -18,7 +18,6 @@ export const addAdmin = async (email: string) => {
       status: 'active'
     });
 
-    console.log('Admin eklendi:', email);
     return { success: true, message: 'Admin başarıyla eklendi' };
   } catch (error: any) {
     console.error('Admin ekleme hatası:', error);
@@ -40,7 +39,6 @@ export const removeAdmin = async (email: string) => {
     const adminDoc = querySnapshot.docs[0];
     await deleteDoc(doc(db, 'admins', adminDoc.id));
 
-    console.log('Admin silindi:', email);
     return { success: true, message: 'Admin başarıyla silindi' };
   } catch (error: any) {
     console.error('Admin silme hatası:', error);
@@ -79,7 +77,6 @@ export const setupInitialAdmin = async (email: string) => {
         status: 'active',
         role: 'super-admin'
       });
-      console.log('İlk admin oluşturuldu:', email);
       return { success: true, message: 'İlk admin oluşturuldu' };
     }
     
