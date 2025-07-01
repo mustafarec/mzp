@@ -1,21 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { X, Package, Tag, Calendar, ChevronLeft, ChevronRight, Share2, ArrowRight } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Package, ChevronLeft, ChevronRight, Share2, ArrowRight } from 'lucide-react';
 import Image from 'next/image';
-import Link from 'next/link';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { cn } from '@/lib/utils';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, doc, getDoc, limit } from 'firebase/firestore';
 import type { Product, Category } from '@/types';
@@ -85,27 +82,16 @@ interface ProductDetailDialogProps {
 
 export default function ProductDetailDialog({ open, onOpenChange, product, onProductChange }: ProductDetailDialogProps) {
   const [isMounted, setIsMounted] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [category, setCategory] = useState<Category | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
-  const [scrollY, setScrollY] = useState(0);
-  const [imageScale, setImageScale] = useState(1);
-  const [isMobileDevice, setIsMobileDevice] = useState(false);
+  const [isImageSticky, setIsImageSticky] = useState(true);
+  const descriptionRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Ensure component is mounted before rendering to prevent hydration mismatch
   useEffect(() => {
     setIsMounted(true);
-    // Set mobile device detection after mount
-    setIsMobileDevice(window.innerWidth < 768);
-
-    // Listen for resize events to update mobile state
-    const handleResize = () => {
-      setIsMobileDevice(window.innerWidth < 768);
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   // Load additional product data when dialog opens
@@ -114,12 +100,9 @@ export default function ProductDetailDialog({ open, onOpenChange, product, onPro
 
     const loadProductData = async () => {
       try {
-        setLoading(true);
-        setActiveImageIndex(0); // Reset image index
-        setScrollY(0); // Reset scroll position
-        setImageScale(1); // Reset image scale
+        setActiveImageIndex(0); // Resim indeksini sıfırla
 
-        // Fetch category and related products
+        // Kategori ve benzer ürünleri getir
         const [categoryData, relatedData] = await Promise.all([
           getCategoryById(product.categoryId),
           getRelatedProducts(product.categoryId, product.id)
@@ -128,30 +111,38 @@ export default function ProductDetailDialog({ open, onOpenChange, product, onPro
         setCategory(categoryData);
         setRelatedProducts(relatedData);
       } catch (error) {
-        console.error('Error loading product data:', error);
-      } finally {
-        setLoading(false);
+        console.error('Ürün verileri yüklenirken hata:', error);
       }
     };
 
     loadProductData();
   }, [open, product]);
 
-  // Handle scroll for image scaling animation
+  // Scroll için sticky davranış kontrolü
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const scrollTop = e.currentTarget.scrollTop;
+    if (!descriptionRef.current) return;
     
-    // Responsive scroll parameters using state instead of direct window access
-    const maxScroll = isMobileDevice ? 150 : 200; // Mobilde daha erken durdur
-    const minScale = isMobileDevice ? 0.7 : 0.6; // Mobilde daha az küçült
+    const scrollContainer = e.currentTarget;
+    const scrollTop = scrollContainer.scrollTop;
     
-    // Smooth easing function for more natural animation
-    const progress = Math.min(scrollTop / maxScroll, 1);
-    const easedProgress = 1 - Math.pow(1 - progress, 3); // Cubic ease-out
-    const scale = 1 - (easedProgress * (1 - minScale));
-    
-    setScrollY(scrollTop);
-    setImageScale(scale);
+    // Description elementinin container içindeki gerçek pozisyonunu hesapla
+    try {
+      // Method 1: offsetTop + offsetHeight kullanarak bottom pozisyonunu bul
+      const descriptionBottom = descriptionRef.current.offsetTop + descriptionRef.current.offsetHeight;
+      
+      // Açıklama elementinin sonuna gelene kadar sticky
+      if (scrollTop < descriptionBottom) {
+        // Açıklama henüz bitmemiş - resim sabit kalsın
+        setIsImageSticky(true);
+      } else {
+        // Açıklama sonu geçildi - hem resim hem açıklama normal scroll yapsın
+        setIsImageSticky(false);
+      }
+    } catch (error) {
+      console.error('Sticky scroll hesaplama hatası:', error);
+      // Fallback: her zaman sticky kalsın
+      setIsImageSticky(true);
+    }
   };
 
   // Handle image navigation
@@ -191,13 +182,25 @@ export default function ProductDetailDialog({ open, onOpenChange, product, onPro
     }
   };
 
-  // Handle product click for related products
+  // Benzer ürün tıklandığında işlem yap
   const handleRelatedProductClick = (relatedProduct: Product) => {
     if (onProductChange) {
-      // Use callback to change product in dialog
+      // Ürün değiştir
       onProductChange(relatedProduct);
+      
+      // State'leri reset et
+      setActiveImageIndex(0);
+      setIsImageSticky(true);
+      
+      // Smooth scroll to top
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
+      }
     } else {
-      // Fallback: close dialog and reopen with new product
+      // Fallback: dialog'u kapat ve yeni ürünle tekrar aç
       onOpenChange(false);
       setTimeout(() => {
         // Note: This requires parent component to handle product switching
@@ -218,20 +221,34 @@ export default function ProductDetailDialog({ open, onOpenChange, product, onPro
           <DialogTitle className="text-2xl font-bold text-left">
             {product.name}
           </DialogTitle>
+          {category && (
+            <Badge className="mt-2 bg-agriculture-100 text-agriculture-primary hover:bg-agriculture-200 w-fit">
+              {category.name}
+            </Badge>
+          )}
         </DialogHeader>
 
-        {/* Main Content - Scrollable Area */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden px-6" style={{
-          maxHeight: 'calc(90vh - 120px)', // Account for header and footer
-          scrollbarWidth: 'thin',
-          scrollbarColor: '#cbd5e1 transparent'
-        }}>
+        {/* Ana İçerik - Kaydırılabilir Alan */}
+        <div 
+          ref={scrollContainerRef}
+          className="flex-1 overflow-y-auto overflow-x-hidden px-6" 
+          onScroll={handleScroll}
+          style={{
+            maxHeight: 'calc(90vh - 120px)', // Header ve footer için alan bırak
+            scrollbarWidth: 'thin',
+            scrollbarColor: '#cbd5e1 transparent'
+          }}
+        >
           <div className="space-y-6 pb-4">
-            {/* Product Main Section */}
+            {/* Ürün Ana Bölümü */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
-              {/* Image Gallery */}
+              {/* Resim Galerisi */}
               <div className="space-y-4">
-                <div className="relative aspect-square max-w-md mx-auto overflow-hidden rounded-xl shadow-lg bg-white border border-gray-100">
+                <div 
+                  className={`relative aspect-square max-w-md mx-auto overflow-hidden rounded-xl shadow-lg bg-white border border-gray-100 transition-all duration-300 ${
+                    isImageSticky ? 'lg:sticky lg:top-4' : ''
+                  }`}
+                >
                       {product.images && product.images.length > 0 ? (
                         <>
                           <Image
@@ -297,19 +314,17 @@ export default function ProductDetailDialog({ open, onOpenChange, product, onPro
                 )}
               </div>
 
-              {/* Product Info */}
+              {/* Ürün Bilgileri */}
               <div className="space-y-6">
                     <div>
-                      {category && (
-                        <Badge className="mb-3 bg-agriculture-100 text-agriculture-primary hover:bg-agriculture-200">
-                          {category.name}
-                        </Badge>
-                      )}
-                      <h1 className="text-2xl sm:text-3xl font-bold text-agriculture-primary mb-4">
-                        {product.name}
-                      </h1>
+                      {/* Ürün Açıklaması - Sticky referans noktası */}
+                      <div ref={descriptionRef} className="prose max-w-none mb-4">
+                        <p className="text-agriculture-600 leading-relaxed whitespace-pre-wrap text-base">
+                          {createSmartParagraphs(product.description)}
+                        </p>
+                      </div>
                       {product.isPremium && (
-                        <Badge className="mb-4 bg-yellow-100 text-yellow-800">
+                        <Badge className="bg-yellow-100 text-yellow-800">
                           Premium ⭐
                         </Badge>
                       )}
@@ -318,21 +333,7 @@ export default function ProductDetailDialog({ open, onOpenChange, product, onPro
               </div>
             </div>
 
-            {/* Product Description */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-agriculture-primary">Ürün Açıklaması</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="prose max-w-none">
-                  <p className="text-agriculture-600 leading-relaxed whitespace-pre-wrap">
-                    {createSmartParagraphs(product.description)}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Related Products */}
+            {/* Benzer Ürünler - Açıklama sonrası görünecek bölüm */}
             {relatedProducts.length > 0 && (
               <div>
                 <Separator className="mb-6" />
@@ -387,7 +388,7 @@ export default function ProductDetailDialog({ open, onOpenChange, product, onPro
           </div>
         </div>
         
-        {/* Footer with share button - Fixed at bottom */}
+        {/* Alt kısım - Paylaş butonu ile sabit */}
         <div className="border-t bg-white p-4 mt-auto">
           <div className="flex justify-center">
             <Button variant="outline" onClick={shareProduct}>
