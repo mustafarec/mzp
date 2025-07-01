@@ -1,5 +1,6 @@
 'use client';
 
+import { forwardRef } from 'react';
 import dynamic from 'next/dynamic';
 import { Loader2 } from 'lucide-react';
 
@@ -10,11 +11,12 @@ interface PDFFlipBookProps {
   className?: string;
   showControls?: boolean;
   onPageCountChange?: (count: number) => void;
+  onPageChange?: (page: number) => void;
 }
 
 // Loading component
 const PDFFlipbookLoading = () => (
-  <div className="flex items-center justify-center min-h-[500px] bg-gray-50 rounded-lg border">
+  <div className="w-full h-full bg-gray-50 rounded-2xl flex items-center justify-center">
     <div className="text-center">
       <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
       <p className="text-gray-600">PDF Flipbook yükleniyor...</p>
@@ -32,8 +34,10 @@ const PDFFlipbook = dynamic(
   }
 );
 
-const LazyPDFFlipbook: React.FC<PDFFlipBookProps> = (props) => {
-  return <PDFFlipbook {...props} />;
-};
+const LazyPDFFlipbook = forwardRef<any, PDFFlipBookProps>((props, ref) => {
+  return <PDFFlipbook ref={ref} {...props} />;
+});
+
+LazyPDFFlipbook.displayName = 'LazyPDFFlipbook';
 
 export default LazyPDFFlipbook;

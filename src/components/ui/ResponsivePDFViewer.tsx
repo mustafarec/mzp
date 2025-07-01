@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, forwardRef, useImperativeHandle, useRef } from 'react';
 import LazyPDFFlipbook from './LazyPDFFlipbook';
 import LazyMobilePDFViewer from './LazyMobilePDFViewer';
 import { cn } from '@/lib/utils';
@@ -12,18 +12,28 @@ interface ResponsivePDFViewerProps {
   title: string;
   className?: string;
   onPageCountChange?: (count: number) => void;
+  onPageChange?: (page: number) => void;
 }
 
-const ResponsivePDFViewer: React.FC<ResponsivePDFViewerProps> = ({
+const ResponsivePDFViewer = forwardRef<any, ResponsivePDFViewerProps>(({
   pdfUrl,
   title,
   className,
-  onPageCountChange
-}) => {
+  onPageCountChange,
+  onPageChange
+}, ref) => {
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
   const [hasError, setHasError] = useState<boolean>(false);
   const [retryKey, setRetryKey] = useState<number>(0);
+  const flipbookRef = useRef<any>(null);
+
+  // Expose control functions via ref
+  useImperativeHandle(ref, () => ({
+    nextPage: () => flipbookRef.current?.nextPage?.(),
+    prevPage: () => flipbookRef.current?.prevPage?.(),
+    toggleFullscreen: () => flipbookRef.current?.toggleFullscreen?.()
+  }));
 
   // Detect mobile device
   useEffect(() => {
@@ -56,7 +66,7 @@ const ResponsivePDFViewer: React.FC<ResponsivePDFViewerProps> = ({
   // Don't render until we know the screen size to prevent hydration mismatch
   if (!isLoaded) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="w-full h-full bg-gray-50 rounded-2xl flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
           <p className="text-gray-600">PDF viewer hazırlanıyor...</p>
@@ -94,14 +104,18 @@ const ResponsivePDFViewer: React.FC<ResponsivePDFViewerProps> = ({
       ) : (
         // Desktop: Use existing flipbook (lazy loaded)
         <LazyPDFFlipbook
+          ref={flipbookRef}
           pdfUrl={pdfUrl}
           title={title}
           className="h-[calc(100vh-200px)] min-h-[500px] w-full"
           onPageCountChange={onPageCountChange}
+          onPageChange={onPageChange}
         />
       )}
     </div>
   );
-};
+});
+
+ResponsivePDFViewer.displayName = 'ResponsivePDFViewer';
 
 export default ResponsivePDFViewer;

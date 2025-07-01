@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState, useEffect, useCallback } from 'react';
+import React, { useRef, useState, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
 import HTMLFlipBook from 'react-pageflip';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,7 +12,8 @@ import {
   Maximize,
   Minimize,
   Loader2,
-  RefreshCw
+  RefreshCw,
+  X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -29,6 +30,7 @@ interface PDFFlipBookProps {
   className?: string;
   showControls?: boolean;
   onPageCountChange?: (count: number) => void;
+  onPageChange?: (page: number) => void;
 }
 
 const FlipBookPage = React.forwardRef<HTMLDivElement, { page: PDFPage }>(
@@ -56,13 +58,14 @@ const FlipBookPage = React.forwardRef<HTMLDivElement, { page: PDFPage }>(
 
 FlipBookPage.displayName = 'FlipBookPage';
 
-const PDFFlipBook: React.FC<PDFFlipBookProps> = ({ 
+const PDFFlipBook = forwardRef<any, PDFFlipBookProps>(({ 
   pdfUrl, 
   title, 
   className = '', 
   showControls = true,
-  onPageCountChange
-}) => {
+  onPageCountChange,
+  onPageChange
+}, ref) => {
   const book = useRef<any>(null);
   const [currentPage, setCurrentPage] = useState(0);
   const [fullscreenCurrentPage, setFullscreenCurrentPage] = useState(0);
@@ -80,6 +83,13 @@ const PDFFlipBook: React.FC<PDFFlipBookProps> = ({
   const [pdfPosition, setPdfPosition] = useState({ paddingLeft: 80, translateX: 60 });
   const [fullscreenPosition, setFullscreenPosition] = useState({ paddingLeft: 120, translateX: 100 });
   const [zoomLevel, setZoomLevel] = useState(1);
+
+  // Expose control functions via ref
+  useImperativeHandle(ref, () => ({
+    nextPage,
+    prevPage,
+    toggleFullscreen
+  }));
 
   // Fixed responsive dimensions for stable flipbook
   useEffect(() => {
@@ -373,7 +383,7 @@ const PDFFlipBook: React.FC<PDFFlipBookProps> = ({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="w-full h-full bg-gray-50 rounded-2xl flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
           <p className="text-gray-600 mb-2">{title} yükleniyor...</p>
@@ -406,83 +416,6 @@ const PDFFlipBook: React.FC<PDFFlipBookProps> = ({
         className
       )}
     >
-      {/* Controls */}
-      {showControls && (
-        <div className="absolute top-4 left-4 right-4 z-20 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-          </div>
-          
-          <div className="flex flex-col items-end gap-2">
-            {/* Control Buttons */}
-            <div className="flex items-center gap-1 bg-white/90 backdrop-blur-sm rounded-lg shadow p-1">
-              {!isMobile && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={toggleFullscreen}
-                  className="h-8 w-8 p-0"
-                >
-                  {isFullscreen ? 
-                    <Minimize className="h-3 w-3" /> : 
-                    <Maximize className="h-3 w-3" />
-                  }
-                </Button>
-              )}
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={downloadPDF}
-                className="h-8 w-8 p-0"
-              >
-                <Download className="h-3 w-3" />
-              </Button>
-            </div>
-            
-            {/* Navigation Controls - Same column */}
-            {!isFullscreen && (
-              <div 
-                className="flex flex-col items-center space-y-2 bg-black/70 backdrop-blur-sm rounded-lg p-2"
-                style={{
-                  position: 'absolute',
-                  right: `${Math.max(4, containerSpacing.padding * 0.5)}px`,
-                  top: '60px',
-                  zIndex: 20
-                }}
-              >
-                {/* Next Button */}
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={nextPage} 
-                  disabled={currentPage >= totalPages - 1}
-                  className="w-8 h-8 p-0 bg-white/90 hover:bg-white text-black border-white/50"
-                  title="Sonraki Sayfa"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-                
-                {/* Page Counter */}
-                <div className="text-xs text-white font-medium bg-white/20 px-1 py-1 rounded text-center min-w-[30px]">
-                  {currentPage + 1}/{totalPages}
-                </div>
-                
-                {/* Previous Button */}
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={prevPage} 
-                  disabled={currentPage === 0}
-                  className="w-8 h-8 p-0 bg-white/90 hover:bg-white text-black border-white/50"
-                  title="Önceki Sayfa"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* FlipBook */}
       {isFullscreen ? (
@@ -580,6 +513,19 @@ const PDFFlipBook: React.FC<PDFFlipBookProps> = ({
             </div>
           </div>
           
+          {/* Close Button - Top Left */}
+          <div className="absolute top-6 left-6 z-30">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleFullscreen}
+              className="h-9 w-9 rounded-xl bg-white/90 backdrop-blur-sm border border-white/20 hover:bg-white text-red-600 hover:text-red-700 transition-all duration-200"
+              title="Tam Ekrandan Çık"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          
           {/* Zoom Indicator */}
           <div className="absolute top-6 left-1/2 transform -translate-x-1/2 bg-black/70 backdrop-blur-sm rounded-lg px-3 py-2 z-30">
             <div className="text-sm text-white font-medium">
@@ -598,18 +544,15 @@ const PDFFlipBook: React.FC<PDFFlipBookProps> = ({
           }}
         >
           {/* PDF Container - Full Width */}
-          <div className="flex-1 flex items-center relative transition-all duration-500 ease-in-out"
-               style={{
-                 justifyContent: currentPage === 0 ? 'center' : 'flex-start',
-                 paddingLeft: currentPage === 0 ? '0' : `${pdfPosition.paddingLeft}px`
-               }}
-          >
+          <div className="flex-1 flex items-center justify-center relative">
+            
+
             <HTMLFlipBook
               ref={book}
-              className="catalog-flipbook shadow-lg transition-transform duration-500 ease-in-out"
+              className="catalog-flipbook shadow-lg"
               style={{ 
                 margin: '0 auto',
-                transform: currentPage === 0 ? 'translateX(0)' : `translateX(${pdfPosition.translateX}px)`
+                transform: 'translateX(0)'
               }}
               width={dimensions.width}
               height={dimensions.height}
@@ -629,6 +572,7 @@ const PDFFlipBook: React.FC<PDFFlipBookProps> = ({
                 console.log('Page flipped normal mode:', e);
                 const pageNum = typeof e?.data === 'number' ? e.data : 0;
                 setCurrentPage(pageNum);
+                onPageChange?.(pageNum);
               }}
               drawShadow={true}
               flippingTime={600}
@@ -655,6 +599,8 @@ const PDFFlipBook: React.FC<PDFFlipBookProps> = ({
       )}
     </div>
   );
-};
+});
+
+PDFFlipBook.displayName = 'PDFFlipBook';
 
 export default PDFFlipBook;
