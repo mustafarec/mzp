@@ -283,10 +283,7 @@ export default function HomePage() {
                       <p className="text-gray-600 text-xs sm:text-sm mb-2 sm:mb-3 line-clamp-2">
                         {product.description?.replace(/<[^>]*>/g, '').slice(0, 100)}...
                       </p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs sm:text-sm text-green-600 font-medium">
-                          Premium Ürün
-                        </span>
+                      <div className="flex items-center justify-end">
                         <span className="text-xs bg-yellow-100 text-yellow-800 px-1 sm:px-2 py-1 rounded-full">
                           Premium ⭐
                         </span>
