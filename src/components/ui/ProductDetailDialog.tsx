@@ -218,11 +218,6 @@ export default function ProductDetailDialog({ open, onOpenChange, product, onPro
           <DialogTitle className="text-2xl font-bold text-left">
             {product.name}
           </DialogTitle>
-          {category && (
-            <DialogDescription className="text-left">
-              {category.name}
-            </DialogDescription>
-          )}
         </DialogHeader>
 
         {/* Main Content - Scrollable Area */}
@@ -320,45 +315,6 @@ export default function ProductDetailDialog({ open, onOpenChange, product, onPro
                       )}
                     </div>
 
-                    {/* Product Details */}
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-agriculture-primary text-lg">
-                          <Package className="h-5 w-5" />
-                          Ürün Detayları
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        {product.sku && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <Tag className="h-4 w-4 text-muted-foreground" />
-                            <span className="font-medium">SKU:</span>
-                            <span className="text-muted-foreground">{product.sku}</span>
-                          </div>
-                        )}
-                        
-                        <div className="flex items-center gap-2 text-sm">
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
-                          <span className="font-medium">Eklenme:</span>
-                          <span className="text-muted-foreground">
-                            {product.createdAt.toLocaleDateString('tr-TR')}
-                          </span>
-                        </div>
-
-                        {product.tags && product.tags.length > 0 && (
-                          <div>
-                            <span className="font-medium text-sm mb-2 block">Etiketler:</span>
-                            <div className="flex flex-wrap gap-2">
-                              {product.tags.map((tag, index) => (
-                                <Badge key={index} variant="outline" className="text-xs">
-                                  {tag}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
               </div>
             </div>
 

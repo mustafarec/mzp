@@ -13,8 +13,27 @@ import {
   Minimize,
   Loader2,
   RefreshCw,
-  X
+  X,
+  Sprout
 } from 'lucide-react';
+
+// Bahçe ipuçları
+const gardenTips = [
+  "Toprak nem seviyesini kontrol etmek için parmağınızı toprağa sokun",
+  "Bitki hastalıkları genellikle nem ve hava sirkulâsyonu eksikliğinden kaynaklanır",
+  "Doğal gübre için muz kabuğu ve yumurta kabuğu kullanabilirsiniz",
+  "Asidosever bitkiler için kahve telvesini toprağa karıştırın",
+  "Bitkilerin dinlenme dönemlerini tanıyın ve ona göre bakım yapın",
+  "Sera gazlarını azaltmak için yerel ve mevsimlik bitkiler tercih edin",
+  "Bal arısı dostu çiçekler ekosisteme katkı sağlar",
+  "Permakültür prensipleri ile sürdürülebilir bahçe oluşturun",
+  "Doğal avı böcekleri barındırmak için çeşitli bitkiler yetiirin",
+  "Tohum saklama tekniklerini öğrenerek kendi tohum bankanızı oluşturun"
+];
+
+const getRandomGardenTip = () => {
+  return gardenTips[Math.floor(Math.random() * gardenTips.length)];
+};
 import { cn } from '@/lib/utils';
 
 interface PDFPage {
@@ -83,6 +102,7 @@ const PDFFlipBook = forwardRef<any, PDFFlipBookProps>(({
   const [pdfPosition, setPdfPosition] = useState({ paddingLeft: 80, translateX: 60 });
   const [fullscreenPosition, setFullscreenPosition] = useState({ paddingLeft: 120, translateX: 100 });
   const [zoomLevel, setZoomLevel] = useState(1);
+  const [gardenTip] = useState<string>(getRandomGardenTip());
 
   // Expose control functions via ref
   useImperativeHandle(ref, () => ({
@@ -177,7 +197,8 @@ const PDFFlipBook = forwardRef<any, PDFFlipBookProps>(({
 
       // Convert each page to image
       for (let pageNum = 1; pageNum <= numPages; pageNum++) {
-        setLoadProgress(Math.round((pageNum / numPages) * 80));
+        const newProgress = Math.round((pageNum / numPages) * 95);
+        setLoadProgress(prev => Math.max(prev, newProgress));
         const page = await pdf.getPage(pageNum);
         const scale = 1.5; // Good quality for flipbook
         const viewport = page.getViewport({ scale });
@@ -206,6 +227,8 @@ const PDFFlipBook = forwardRef<any, PDFFlipBookProps>(({
         });
       }
 
+      // Final işlemler
+      setLoadProgress(prev => Math.max(prev, 98));
       setPages(convertedPages);
       setTotalPages(convertedPages.length);
       onPageCountChange?.(convertedPages.length);
@@ -383,23 +406,19 @@ const PDFFlipBook = forwardRef<any, PDFFlipBookProps>(({
 
   if (loading) {
     return (
-      <div className="w-full h-full bg-gray-50 rounded-2xl flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
-          <p className="text-gray-600 mb-2">{title} yükleniyor...</p>
+      <div className="w-full h-full flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <Sprout className="h-8 w-8 mx-auto mb-4 text-green-600" />
+          <p className="text-lg font-medium text-gray-800 mb-2">Bahçe İpucu</p>
+          <p className="text-gray-600 text-sm leading-relaxed mb-4">{gardenTip}</p>
+          <p className="text-gray-600 mb-2 text-sm">{title} yükleniyor...</p>
           <div className="w-48 bg-gray-200 rounded-full h-2 mx-auto mb-2">
             <div
-              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+              className="bg-green-600 h-2 rounded-full transition-all duration-300"
               style={{ width: `${loadProgress}%` }}
             ></div>
           </div>
           <p className="text-sm text-gray-500">%{loadProgress} tamamlandı</p>
-          <div className="mt-4 flex gap-2 justify-center">
-            <Button variant="outline" size="sm" onClick={downloadPDF}>
-              <Download className="mr-2 h-4 w-4" />
-              PDF İndir
-            </Button>
-          </div>
         </div>
       </div>
     );

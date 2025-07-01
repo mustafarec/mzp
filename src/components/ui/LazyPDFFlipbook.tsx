@@ -2,7 +2,25 @@
 
 import { forwardRef } from 'react';
 import dynamic from 'next/dynamic';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Sprout } from 'lucide-react';
+
+// Bahçe ipuçları
+const gardenTips = [
+  "Bitki satın alırken yapraklarının parlak ve sağlıklı olduğunu kontrol edin",
+  "Ev içi bitkileri haftada bir kez döndürün ki tüm tarafları ışık alsın",
+  "Bitki besini uygularken her zaman etiket talimatlarını takip edin",
+  "Yeni aldığınız bitkileri diğerlerinden ayrı tutun, hastalık kontrolü için",
+  "Kaktüsler ve sukulent bitkiler çok az suya ihtiyaç duyar",
+  "Bitki yapraklarını düzgün temizlemek fotosentezi artırır",
+  "Sera etkisi yaratmak için bitkilerinizi cam kavanozlarda yetitirebilirsiniz",
+  "Basit aşılama teknikleri ile eski bitkileri yenileyebilirsiniz",
+  "Doğal böcek kovucular lavanta ve nane gibi kokulu bitkilerdir",
+  "Bitki köklerinin sağlığını kontrol etmek için ara sıra saksıdan çıkarın"
+];
+
+const getRandomGardenTip = () => {
+  return gardenTips[Math.floor(Math.random() * gardenTips.length)];
+};
 
 // Dynamic import için tip tanımları
 interface PDFFlipBookProps {
@@ -14,16 +32,22 @@ interface PDFFlipBookProps {
   onPageChange?: (page: number) => void;
 }
 
+// Component için sabit bir tip seç
+const staticGardenTip = gardenTips[2];
+
 // Loading component
-const PDFFlipbookLoading = () => (
-  <div className="w-full h-full bg-gray-50 rounded-2xl flex items-center justify-center">
-    <div className="text-center">
-      <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
-      <p className="text-gray-600">PDF Flipbook yükleniyor...</p>
-      <p className="text-sm text-gray-500 mt-1">İlk yüklemede biraz zaman alabilir</p>
+const PDFFlipbookLoading = () => {
+  return (
+    <div className="w-full h-full flex items-center justify-center">
+      <div className="text-center max-w-md">
+        <Sprout className="h-8 w-8 mx-auto mb-4 text-green-600" />
+        <p className="text-lg font-medium text-gray-800 mb-2">Bahçe İpucu</p>
+        <p className="text-gray-600 text-sm leading-relaxed">{staticGardenTip}</p>
+        <p className="text-xs text-gray-500 mt-3">PDF Flipbook yükleniyor...</p>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 // Dynamic import with lazy loading
 const PDFFlipbook = dynamic(

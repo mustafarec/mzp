@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { X, Download, Share2, Loader2, Maximize, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, Download, Share2, Loader2, Maximize, ChevronLeft, ChevronRight, Sprout } from 'lucide-react';
 import { Dialog, DialogContent, DialogPortal, DialogOverlay } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -9,18 +9,42 @@ import dynamic from 'next/dynamic';
 import type { Catalog } from '@/types';
 
 // Dynamic import for ResponsivePDFViewer with loading
+// Bahçe ipuçları
+const gardenTips = [
+  "Sabah erken saatlerde sulama yapmak bitkilerin daha iyi su almasını sağlar",
+  "Organik gübreler toprağın yapısını iyileştirir ve uzun vadeli beslenme sağlar",
+  "Kış aylarında bitkilerin suya ihtiyacı azalır, toprak kontrolü yapın",
+  "Sararan yapraklar genellikle aşırı sulama veya besin eksikliğindendir",
+  "Kompost yapmak hem doğa dostu hem de etkili bir gübreleme yöntemidir",
+  "Bitkilerin yaprakları güneş ışığına doğru yönelir, yer değiştirmeyi unutmayın",
+  "Mevsimsel ekimler için doğru zamanlamayı yakalamak başarının anahtarıdır",
+  "Tohum ekiminde derinlik, tohumun boyutunun 2-3 katı olmalıdır",
+  "Mulçlama toprağın nemini korur ve yabani ot büyümesini engeller",
+  "Bitki hastalıklarını önlemek için iyi havalandırma önemlidir"
+];
+
+const getRandomGardenTip = () => {
+  return gardenTips[Math.floor(Math.random() * gardenTips.length)];
+};
+
+// Component için sabit bir tip seç
+const staticGardenTip = gardenTips[0];
+
 const ResponsivePDFViewer = dynamic(
   () => import('@/components/ui/ResponsivePDFViewer'),
   {
-    loading: () => (
-      <div className="max-w-[85%] max-h-[90%] bg-gray-50 rounded-2xl overflow-hidden flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
-          <p className="text-gray-600">PDF görüntüleyici yükleniyor...</p>
-          <p className="text-sm text-gray-500 mt-1">Bu işlem birkaç saniye sürebilir</p>
+    loading: () => {
+      return (
+        <div className="max-w-[85%] max-h-[90%] flex items-center justify-center">
+          <div className="text-center max-w-md">
+            <Sprout className="h-8 w-8 mx-auto mb-4 text-green-600" />
+            <p className="text-lg font-medium text-gray-800 mb-2">Bahçe İpucu</p>
+            <p className="text-gray-600 text-sm leading-relaxed">{staticGardenTip}</p>
+            <p className="text-xs text-gray-500 mt-3">PDF görüntüleyici hazırlanıyor...</p>
+          </div>
         </div>
-      </div>
-    ),
+      );
+    },
     ssr: false
   }
 );
@@ -127,10 +151,9 @@ export default function PDFViewerDialog({ open, onOpenChange, catalog }: PDFView
           >
             {/* Header */}
             <div className="grid grid-cols-3 items-center gap-4 p-4 border-b bg-white/95 backdrop-blur-sm sticky top-0 z-10 rounded-t-3xl">
-              {/* Left: Title and Brand */}
+              {/* Left: Title */}
               <div className="flex flex-col">
                 <h2 className="text-lg font-semibold truncate">{catalog.title}</h2>
-                <p className="text-sm text-muted-foreground">{catalog.brand}</p>
               </div>
               
               {/* Center: Navigation Controls */}
@@ -205,7 +228,7 @@ export default function PDFViewerDialog({ open, onOpenChange, catalog }: PDFView
             <div className="flex-1 flex items-center justify-center p-2">
               
               {/* PDF Container - Centered */}
-              <div className="max-w-[85%] max-h-[90%] bg-gray-50 rounded-2xl overflow-hidden flex items-center justify-center">
+              <div className="max-w-[85%] max-h-[90%] rounded-2xl overflow-hidden flex items-center justify-center">
                 <ResponsivePDFViewer
                   ref={pdfViewerRef}
                   pdfUrl={catalog.pdfUrl}

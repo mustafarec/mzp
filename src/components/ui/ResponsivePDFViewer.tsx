@@ -5,7 +5,25 @@ import LazyPDFFlipbook from './LazyPDFFlipbook';
 import LazyMobilePDFViewer from './LazyMobilePDFViewer';
 import { cn } from '@/lib/utils';
 import { Button } from './button';
-import { RefreshCw, Loader2 } from 'lucide-react';
+import { RefreshCw, Loader2, Sprout } from 'lucide-react';
+
+// Bahçe ipuçları
+const gardenTips = [
+  "Bitki kökleri nefes alabilmesi için toprağı ara sıra gevşetin",
+  "Yağmurlu havalarda dış bitkileri sulamaya gerek yoktur",
+  "Zararlı böceklere karşı doğal çözümler tercih edin",
+  "Bitkilerin büyüme mevsiminde daha sık gübreleme yapın",
+  "Saksı bitkilerini yılda bir kez taze toprakla değiştirin",
+  "Güneş seven bitkileri güney cepheli pencerelere yerlestirin",
+  "Bitki budaması dinlenme döneminde yapılır, genellikle kış sonu",
+  "Toprak pH değeri bitki sağlığı için çok önemlidir",
+  "Sulama yaparken yapraklara değil köklere su verin",
+  "İyi drenajı olan saksılar kök çürümesini önler"
+];
+
+const getRandomGardenTip = () => {
+  return gardenTips[Math.floor(Math.random() * gardenTips.length)];
+};
 
 interface ResponsivePDFViewerProps {
   pdfUrl: string;
@@ -26,6 +44,7 @@ const ResponsivePDFViewer = forwardRef<any, ResponsivePDFViewerProps>(({
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
   const [hasError, setHasError] = useState<boolean>(false);
   const [retryKey, setRetryKey] = useState<number>(0);
+  const [gardenTip, setGardenTip] = useState<string>('');
   const flipbookRef = useRef<any>(null);
 
   // Expose control functions via ref
@@ -45,6 +64,9 @@ const ResponsivePDFViewer = forwardRef<any, ResponsivePDFViewerProps>(({
     // Initial check
     checkMobile();
     setIsLoaded(true);
+    
+    // Set garden tip once on mount
+    setGardenTip(getRandomGardenTip());
     
     // Listen for resize events
     window.addEventListener('resize', checkMobile);
@@ -66,11 +88,12 @@ const ResponsivePDFViewer = forwardRef<any, ResponsivePDFViewerProps>(({
   // Don't render until we know the screen size to prevent hydration mismatch
   if (!isLoaded) {
     return (
-      <div className="w-full h-full bg-gray-50 rounded-2xl flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
-          <p className="text-gray-600">PDF viewer hazırlanıyor...</p>
-          <p className="text-sm text-gray-500 mt-1">Cihaz türü belirleniyor</p>
+      <div className="w-full h-full flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <Sprout className="h-8 w-8 mx-auto mb-4 text-green-600" />
+          <p className="text-lg font-medium text-gray-800 mb-2">Bahçe İpucu</p>
+          <p className="text-gray-600 text-sm leading-relaxed">{gardenTip || getRandomGardenTip()}</p>
+          <p className="text-xs text-gray-500 mt-3">Cihaz türü belirleniyor...</p>
         </div>
       </div>
     );
