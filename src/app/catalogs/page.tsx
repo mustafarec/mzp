@@ -98,8 +98,16 @@ export default function CatalogsPage() {
       e.preventDefault();
       e.stopPropagation();
     }
-    setSelectedCatalog(catalog);
-    setDialogOpen(true);
+    
+    const isMobile = window.innerWidth < 768;
+    if (isMobile) {
+      // Güvenli proxy URL kullan
+      const proxyUrl = `/api/pdf-proxy?url=${encodeURIComponent(catalog.pdfUrl)}`;
+      window.open(proxyUrl, '_blank');
+    } else {
+      setSelectedCatalog(catalog);
+      setDialogOpen(true);
+    }
   };
 
 
