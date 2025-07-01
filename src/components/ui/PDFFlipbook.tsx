@@ -16,6 +16,7 @@ import {
   X,
   Sprout
 } from 'lucide-react';
+import { convertPDFWithCache, type PDFPageData, type PDFConversionOptions } from '@/lib/pdfUtils';
 
 // Bahçe ipuçları
 const gardenTips = [
@@ -170,79 +171,52 @@ const PDFFlipBook = forwardRef<any, PDFFlipBookProps>(({
     };
   }, [isFullscreen, zoomLevel]);
 
-  // Convert PDF to images using PDF.js (simplified approach)
+  // Convert PDF to images using centralized caching system
   const convertPDFToImages = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
       setLoadProgress(0);
 
-      // Use PDF.js with centralized worker initialization
-      const { getPDFLib } = await import('@/lib/pdfWorker');
-      const pdfjsLib = await getPDFLib();
+      // Use centralized PDF conversion with caching
+      const options: PDFConversionOptions = {
+        scale: 1.5,
+        quality: 0.8,
+        onProgress: (progress, pageNumber) => {
+          const newProgress = Math.round(progress * 0.95); // Up to 95%
+          setLoadProgress(prev => Math.max(prev, newProgress));
+        }
+      };
 
       // Use CORS proxy for Firebase Storage URLs
       const proxyUrl = pdfUrl.includes('firebasestorage.googleapis.com') 
         ? `/api/pdf-proxy?url=${encodeURIComponent(pdfUrl)}`
         : pdfUrl;
 
-      const pdf = await pdfjsLib.getDocument({
-        url: proxyUrl,
-        cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/cmaps/`,
-        cMapPacked: true,
-      }).promise;
+      const convertedPages = await convertPDFWithCache(proxyUrl, options);
+      
+      // Convert PDFPageData to our local PDFPage format
+      const pages: PDFPage[] = convertedPages.map(page => ({
+        pageNumber: page.pageNumber,
+        imageData: page.imageData,
+        width: page.width,
+        height: page.height
+      }));
 
-      const numPages = pdf.numPages;
-      const convertedPages: PDFPage[] = [];
-
-      // Convert each page to image
-      for (let pageNum = 1; pageNum <= numPages; pageNum++) {
-        const newProgress = Math.round((pageNum / numPages) * 95);
-        setLoadProgress(prev => Math.max(prev, newProgress));
-        const page = await pdf.getPage(pageNum);
-        const scale = 1.5; // Good quality for flipbook
-        const viewport = page.getViewport({ scale });
-        
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        
-        if (!context) {
-          console.error('Canvas 2D context creation failed for page', pageNum);
-          continue; // Skip this page and continue with next
-        }
-        
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
-
-        await page.render({
-          canvasContext: context,
-          viewport: viewport,
-        }).promise;
-
-        convertedPages.push({
-          pageNumber: pageNum,
-          imageData: canvas.toDataURL('image/jpeg', 0.8),
-          width: viewport.width,
-          height: viewport.height,
-        });
-      }
-
-      // Final işlemler
+      // Final processing
       setLoadProgress(prev => Math.max(prev, 98));
-      setPages(convertedPages);
-      setTotalPages(convertedPages.length);
-      onPageCountChange?.(convertedPages.length);
+      setPages(pages);
+      setTotalPages(pages.length);
+      onPageCountChange?.(pages.length);
       setLoadProgress(100);
       setLoading(false);
-      
-      // Log for debugging
     } catch (err) {
       console.error('PDF conversion error:', err);
       setError('PDF dosyası yüklenemedi. Lütfen tekrar deneyin.');
       setLoading(false);
       setLoadProgress(0);
     }
-  }, [pdfUrl]);
+  }, [pdfUrl, onPageCountChange]);
 
   useEffect(() => {
     if (pdfUrl) {

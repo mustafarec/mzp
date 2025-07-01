@@ -20,7 +20,7 @@ import {
   RotateCcw
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { convertPDFWithCache, type PDFPageData } from '@/lib/pdfUtils';
+import { convertPDFWithCache, type PDFPageData, type PDFConversionOptions } from '@/lib/pdfUtils';
 import type { Catalog } from '@/types';
 
 interface PDFPage {
@@ -132,60 +132,39 @@ const CatalogFlipbook: React.FC<CatalogFlipbookProps> = ({
     return () => window.removeEventListener('resize', updateDimensions);
   }, [isFullscreen]);
 
-  // Convert PDF to images using PDF.js
+  // Convert PDF to images using centralized caching system
   const convertPDFToImages = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
       setLoadProgress(0);
 
-      // Use PDF.js with centralized worker initialization
-      const { getPDFLib } = await import('@/lib/pdfWorker');
-      const pdfjsLib = await getPDFLib();
-
-      const pdf = await pdfjsLib.getDocument({
-        url: catalog.pdfUrl,
-        cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/cmaps/`,
-        cMapPacked: true,
-      }).promise;
-
-      const numPages = pdf.numPages;
-      const convertedPages: PDFPage[] = [];
-
-      // Convert each page to image
-      for (let pageNum = 1; pageNum <= numPages; pageNum++) {
-        setLoadProgress(Math.round((pageNum / numPages) * 80)); // %80'e kadar progress
-
-        const page = await pdf.getPage(pageNum);
-        const scale = 1.5; // Good quality for flipbook
-        const viewport = page.getViewport({ scale });
-        
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        
-        if (!context) {
-          console.error('Canvas 2D context creation failed for page', pageNum);
-          continue; // Skip this page and continue with next
+      // Use centralized PDF conversion with caching
+      const options: PDFConversionOptions = {
+        scale: 1.5,
+        quality: 0.8,
+        onProgress: (progress, pageNumber) => {
+          setLoadProgress(Math.round(progress * 0.95)); // Up to 95%
         }
-        
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
+      };
 
-        await page.render({
-          canvasContext: context,
-          viewport: viewport,
-        }).promise;
+      // Use Firebase Storage proxy for Firebase URLs
+      const pdfUrl = catalog.pdfUrl.includes('firebasestorage.googleapis.com') 
+        ? `/api/pdf-proxy?url=${encodeURIComponent(catalog.pdfUrl)}`
+        : catalog.pdfUrl;
 
-        convertedPages.push({
-          pageNumber: pageNum,
-          imageData: canvas.toDataURL('image/jpeg', 0.8),
-          width: viewport.width,
-          height: viewport.height,
-        });
-      }
+      const convertedPages = await convertPDFWithCache(pdfUrl, options);
+      
+      // Convert PDFPageData to our local PDFPage format
+      const pages: PDFPage[] = convertedPages.map(page => ({
+        pageNumber: page.pageNumber,
+        imageData: page.imageData,
+        width: page.width,
+        height: page.height
+      }));
 
-      setPages(convertedPages);
-      setTotalPages(convertedPages.length);
+      setPages(pages);
+      setTotalPages(pages.length);
       setLoadProgress(100);
       setLoading(false);
     } catch (err) {

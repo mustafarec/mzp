@@ -319,12 +319,96 @@ export function generatePDFCacheKey(pdfUrl: string, options: PDFConversionOption
 }
 
 /**
- * Browser'da PDF cache işlemleri
+ * PDF Cache Entry interface for IndexedDB storage
+ */
+interface PDFCacheEntry {
+  key: string;
+  data: PDFPageData[];
+  timestamp: number;
+  sessionId: string;
+  size: number;
+  compressed: boolean;
+}
+
+/**
+ * Compressed PDF Cache Entry for storage optimization
+ */
+interface CompressedPDFCacheEntry {
+  key: string;
+  compressedData: string; // Base64 compressed JSON
+  timestamp: number;
+  sessionId: string;
+  originalSize: number;
+  compressedSize: number;
+}
+
+/**
+ * Simple compression utilities for PDF cache data
+ */
+class CompressionUtils {
+  /**
+   * Compress PDF page data using JSON + base64 compression
+   */
+  static compressData(data: PDFPageData[]): string {
+    try {
+      const jsonString = JSON.stringify(data);
+      
+      // Simple RLE-like compression for base64 image data
+      const compressed = jsonString.replace(
+        /"imageData":"data:image\/[^;]+;base64,([^"]+)"/g,
+        (match, base64Data) => {
+          // For large base64 strings, we could implement more compression
+          // For now, just return as-is but mark for potential optimization
+          return match;
+        }
+      );
+      
+      // Convert to base64 for storage
+      return btoa(compressed);
+    } catch (error) {
+      throw new Error('Compression failed');
+    }
+  }
+
+  /**
+   * Decompress PDF page data
+   */
+  static decompressData(compressedData: string): PDFPageData[] {
+    try {
+      const jsonString = atob(compressedData);
+      return JSON.parse(jsonString) as PDFPageData[];
+    } catch (error) {
+      throw new Error('Decompression failed');
+    }
+  }
+
+  /**
+   * Calculate compression ratio
+   */
+  static getCompressionRatio(original: string, compressed: string): number {
+    return compressed.length / original.length;
+  }
+}
+
+/**
+ * Browser'da PDF cache işlemleri - Hybrid Memory + IndexedDB
  */
 export class PDFCache {
   private static instance: PDFCache;
   private cache: Map<string, PDFPageData[]> = new Map();
-  private maxCacheSize: number = 10; // Maksimum 10 PDF cache'le
+  private maxMemoryCacheSize: number = 10; // Memory cache limit
+  private maxIndexedDBCacheSize: number = 50; // IndexedDB cache limit
+  private dbName = 'PDFCache';
+  private storeName = 'pdfs';
+  private sessionId: string;
+  private db: IDBDatabase | null = null;
+  private indexedDBSupported: boolean = true;
+  private compressionEnabled: boolean = true;
+
+  constructor() {
+    this.sessionId = this.generateSessionId();
+    this.initializeIndexedDB();
+  }
 
   static getInstance(): PDFCache {
     if (!PDFCache.instance) {
@@ -333,10 +417,225 @@ export class PDFCache {
     return PDFCache.instance;
   }
 
+  private generateSessionId(): string {
+    return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  }
+
+  private async initializeIndexedDB(): Promise<void> {
+    if (typeof window === 'undefined' || !window.indexedDB) {
+      this.indexedDBSupported = false;
+      return;
+    }
+
+    try {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(this.dbName, 1);
+        
+        request.onerror = () => {
+          this.indexedDBSupported = false;
+          resolve();
+        };
+        
+        request.onsuccess = (event) => {
+          this.db = (event.target as IDBOpenDBRequest).result;
+          this.cleanupExpiredSessions();
+          resolve();
+        };
+        
+        request.onupgradeneeded = (event) => {
+          const db = (event.target as IDBOpenDBRequest).result;
+          if (!db.objectStoreNames.contains(this.storeName)) {
+            const store = db.createObjectStore(this.storeName, { keyPath: 'key' });
+            store.createIndex('sessionId', 'sessionId', { unique: false });
+            store.createIndex('timestamp', 'timestamp', { unique: false });
+          }
+        };
+      });
+    } catch (error) {
+      this.indexedDBSupported = false;
+    }
+  }
+
+  private async cleanupExpiredSessions(): Promise<void> {
+    if (!this.db || !this.indexedDBSupported) return;
+
+    try {
+      const transaction = this.db.transaction([this.storeName], 'readwrite');
+      const store = transaction.objectStore(this.storeName);
+      const request = store.getAll();
+      
+      request.onsuccess = () => {
+        const entries: PDFCacheEntry[] = request.result;
+        const currentTime = Date.now();
+        const sessionExpiry = 6 * 60 * 60 * 1000; // 6 hours
+        
+        entries.forEach(entry => {
+          if (currentTime - entry.timestamp > sessionExpiry) {
+            store.delete(entry.key);
+          }
+        });
+      };
+    } catch (error) {
+      // Silently fail cleanup
+    }
+  }
+
+  private async setIndexedDB(key: string, data: PDFPageData[]): Promise<void> {
+    if (!this.db || !this.indexedDBSupported) return;
+
+    try {
+      // Check cache size and cleanup if needed
+      const transaction = this.db.transaction([this.storeName], 'readwrite');
+      const store = transaction.objectStore(this.storeName);
+      
+      const countRequest = store.count();
+      countRequest.onsuccess = () => {
+        if (countRequest.result >= this.maxIndexedDBCacheSize) {
+          // Remove oldest entries
+          const index = store.index('timestamp');
+          const cursorRequest = index.openCursor();
+          let deletedCount = 0;
+          const toDelete = countRequest.result - this.maxIndexedDBCacheSize + 1;
+          
+          cursorRequest.onsuccess = (event) => {
+            const cursor = (event.target as IDBRequest).result;
+            if (cursor && deletedCount < toDelete) {
+              store.delete(cursor.primaryKey);
+              deletedCount++;
+              cursor.continue();
+            }
+          };
+        }
+      };
+
+      // Try compression if enabled
+      let entry: PDFCacheEntry;
+      const originalSize = JSON.stringify(data).length;
+
+      if (this.compressionEnabled && originalSize > 50000) { // Only compress large data
+        try {
+          const compressedData = CompressionUtils.compressData(data);
+          const compressedSize = compressedData.length;
+          
+          // Only use compression if it actually reduces size
+          if (compressedSize < originalSize * 0.8) {
+            entry = {
+              key,
+              data: [], // Store empty array, actual data in compressedData
+              timestamp: Date.now(),
+              sessionId: this.sessionId,
+              size: compressedSize,
+              compressed: true
+            };
+            
+            // Store the compressed data as a special property
+            (entry as any).compressedData = compressedData;
+          } else {
+            // Compression didn't help, store normally
+            entry = {
+              key,
+              data,
+              timestamp: Date.now(),
+              sessionId: this.sessionId,
+              size: originalSize,
+              compressed: false
+            };
+          }
+        } catch (compressionError) {
+          // Fallback to uncompressed storage
+          entry = {
+            key,
+            data,
+            timestamp: Date.now(),
+            sessionId: this.sessionId,
+            size: originalSize,
+            compressed: false
+          };
+        }
+      } else {
+        // Small data or compression disabled
+        entry = {
+          key,
+          data,
+          timestamp: Date.now(),
+          sessionId: this.sessionId,
+          size: originalSize,
+          compressed: false
+        };
+      }
+
+      store.put(entry);
+    } catch (error) {
+      // Silently fail IndexedDB operations
+    }
+  }
+
+  private async getIndexedDB(key: string): Promise<PDFPageData[] | null> {
+    if (!this.db || !this.indexedDBSupported) return null;
+
+    try {
+      return new Promise((resolve) => {
+        const transaction = this.db!.transaction([this.storeName], 'readonly');
+        const store = transaction.objectStore(this.storeName);
+        const request = store.get(key);
+        
+        request.onsuccess = () => {
+          const entry: PDFCacheEntry = request.result;
+          if (entry) {
+            try {
+              // Check if data is compressed
+              if (entry.compressed && (entry as any).compressedData) {
+                // Decompress the data
+                const decompressedData = CompressionUtils.decompressData((entry as any).compressedData);
+                resolve(decompressedData);
+              } else {
+                // Return uncompressed data
+                resolve(entry.data);
+              }
+            } catch (decompressionError) {
+              // If decompression fails, try to return raw data
+              resolve(entry.data || null);
+            }
+          } else {
+            resolve(null);
+          }
+        };
+        
+        request.onerror = () => {
+          resolve(null);
+        };
+      });
+    } catch (error) {
+      return null;
+    }
+  }
+
+  private async hasIndexedDB(key: string): Promise<boolean> {
+    if (!this.db || !this.indexedDBSupported) return false;
+
+    try {
+      return new Promise((resolve) => {
+        const transaction = this.db!.transaction([this.storeName], 'readonly');
+        const store = transaction.objectStore(this.storeName);
+        const request = store.get(key);
+        
+        request.onsuccess = () => {
+          resolve(!!request.result);
+        };
+        
+        request.onerror = () => {
+          resolve(false);
+        };
+      });
+    } catch (error) {
+      return false;
+    }
+  }
+
+  // Public API - Backward compatible
   set(key: string, data: PDFPageData[]): void {
-    // Cache size limit kontrolü
-    if (this.cache.size >= this.maxCacheSize) {
-      // En eski item'ı sil (FIFO)
+    // Memory cache with FIFO
+    if (this.cache.size >= this.maxMemoryCacheSize) {
       const firstKey = this.cache.keys().next().value;
       if (firstKey) {
         this.cache.delete(firstKey);
@@ -344,27 +643,97 @@ export class PDFCache {
     }
     
     this.cache.set(key, data);
+    
+    // Async IndexedDB storage (non-blocking)
+    this.setIndexedDB(key, data);
   }
 
   get(key: string): PDFPageData[] | null {
     return this.cache.get(key) || null;
   }
 
+  async getAsync(key: string): Promise<PDFPageData[] | null> {
+    // Try memory cache first (fastest)
+    const memoryResult = this.cache.get(key);
+    if (memoryResult) {
+      return memoryResult;
+    }
+
+    // Try IndexedDB (persistent)
+    const indexedDBResult = await this.getIndexedDB(key);
+    if (indexedDBResult) {
+      // Load back to memory cache for faster subsequent access
+      this.cache.set(key, indexedDBResult);
+      return indexedDBResult;
+    }
+
+    return null;
+  }
+
   has(key: string): boolean {
     return this.cache.has(key);
   }
 
+  async hasAsync(key: string): Promise<boolean> {
+    if (this.cache.has(key)) {
+      return true;
+    }
+    return await this.hasIndexedDB(key);
+  }
+
   clear(): void {
     this.cache.clear();
+    this.clearIndexedDB();
+  }
+
+  private async clearIndexedDB(): Promise<void> {
+    if (!this.db || !this.indexedDBSupported) return;
+
+    try {
+      const transaction = this.db.transaction([this.storeName], 'readwrite');
+      const store = transaction.objectStore(this.storeName);
+      store.clear();
+    } catch (error) {
+      // Silently fail
+    }
   }
 
   getSize(): number {
     return this.cache.size;
   }
+
+  async getTotalSize(): Promise<{ memory: number; indexedDB: number }> {
+    let indexedDBSize = 0;
+    
+    if (this.db && this.indexedDBSupported) {
+      try {
+        indexedDBSize = await new Promise((resolve) => {
+          const transaction = this.db!.transaction([this.storeName], 'readonly');
+          const store = transaction.objectStore(this.storeName);
+          const request = store.count();
+          
+          request.onsuccess = () => {
+            resolve(request.result);
+          };
+          
+          request.onerror = () => {
+            resolve(0);
+          };
+        });
+      } catch (error) {
+        indexedDBSize = 0;
+      }
+    }
+
+    return {
+      memory: this.cache.size,
+      indexedDB: indexedDBSize
+    };
+  }
 }
 
 /**
- * Cache'li PDF conversion
+ * Cache'li PDF conversion - Enhanced with IndexedDB persistent caching
  */
 export async function convertPDFWithCache(
   pdfUrl: string,
@@ -373,14 +742,93 @@ export async function convertPDFWithCache(
   const cache = PDFCache.getInstance();
   const cacheKey = generatePDFCacheKey(pdfUrl, options);
 
-  // Cache'de var mı kontrol et
+  try {
+    // Try async cache first (includes both memory and IndexedDB)
+    const cachedResult = await cache.getAsync(cacheKey);
+    if (cachedResult) {
+      return cachedResult;
+    }
+
+    // Cache'de yoksa convert et ve cache'le
+    const pages = await convertPDFToImages(pdfUrl, options);
+    cache.set(cacheKey, pages);
+    
+    return pages;
+  } catch (error) {
+    // Fallback to memory-only cache on any error
+    if (cache.has(cacheKey)) {
+      return cache.get(cacheKey)!;
+    }
+
+    // Last resort: convert without caching
+    return await convertPDFToImages(pdfUrl, options);
+  }
+}
+
+/**
+ * Legacy sync version for backward compatibility
+ * @deprecated Use convertPDFWithCache instead for better persistence
+ */
+export function convertPDFWithCacheSync(
+  pdfUrl: string,
+  options: PDFConversionOptions = {}
+): Promise<PDFPageData[]> {
+  const cache = PDFCache.getInstance();
+  const cacheKey = generatePDFCacheKey(pdfUrl, options);
+
+  // Only check memory cache for sync version
   if (cache.has(cacheKey)) {
-    return cache.get(cacheKey)!;
+    return Promise.resolve(cache.get(cacheKey)!);
   }
 
-  // Cache'de yoksa convert et ve cache'le
-  const pages = await convertPDFToImages(pdfUrl, options);
-  cache.set(cacheKey, pages);
+  // Convert and cache
+  return convertPDFToImages(pdfUrl, options).then(pages => {
+    cache.set(cacheKey, pages);
+    return pages;
+  });
+}
+
+/**
+ * Preload PDF to cache without returning data
+ * Useful for background loading
+ */
+export async function preloadPDFToCache(
+  pdfUrl: string,
+  options: PDFConversionOptions = {}
+): Promise<boolean> {
+  try {
+    const cache = PDFCache.getInstance();
+    const cacheKey = generatePDFCacheKey(pdfUrl, options);
+    
+    // Check if already cached
+    if (await cache.hasAsync(cacheKey)) {
+      return true;
+    }
+
+    // Convert and cache in background
+    const pages = await convertPDFToImages(pdfUrl, options);
+    cache.set(cacheKey, pages);
+    
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
+/**
+ * Get cache statistics
+ */
+export async function getPDFCacheStats(): Promise<{
+  memory: number;
+  indexedDB: number;
+  total: number;
+}> {
+  const cache = PDFCache.getInstance();
+  const sizes = await cache.getTotalSize();
   
-  return pages;
+  return {
+    memory: sizes.memory,
+    indexedDB: sizes.indexedDB,
+    total: sizes.memory + sizes.indexedDB
+  };
 }
