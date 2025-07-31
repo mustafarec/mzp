@@ -10,6 +10,7 @@ import { MoreHorizontal, X, Send, Bot, User, Expand, Paperclip, ExternalLink } f
 import Link from 'next/link';
 import Image from 'next/image';
 import type { Product } from '@/types';
+import ProductDetailDialog from '@/components/ui/ProductDetailDialog';
 
 interface Message {
   id: string;
@@ -55,6 +56,10 @@ export default function FloatingAIChat() {
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Ürün detay diyalogu state
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [productDialogOpen, setProductDialogOpen] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -463,10 +468,14 @@ export default function FloatingAIChat() {
                       <div className="mt-2 space-y-1.5 sm:space-y-2">
                         <p className="text-[10px] sm:text-xs text-green-600 font-medium">💡 Önerilen Ürünler:</p>
                         {message.products.map((product) => (
-                            <Link 
-                              key={product.id} 
-                              href={`/products/${product.slug}`}
-                              className="block bg-green-50 border border-green-200 rounded-lg p-1.5 sm:p-2 hover:bg-green-100 transition-colors"
+                            <button
+                              key={product.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedProduct(product);
+                                setProductDialogOpen(true);
+                              }}
+                              className="w-full text-left block bg-green-50 border border-green-200 rounded-lg p-1.5 sm:p-2 hover:bg-green-100 transition-colors"
                             >
                               <div className="flex items-start space-x-2">
                                 <div className="h-8 w-8 rounded-full bg-white border-2 border-green-500 flex items-center justify-center flex-shrink-0 overflow-hidden">
@@ -484,10 +493,10 @@ export default function FloatingAIChat() {
                                         }}
                                       />
                                       <div className="absolute inset-0 bg-white border-2 border-green-500 hidden items-center justify-center overflow-hidden rounded-full">
-                                        <Image 
-                                          src="/logo.webp" 
-                                          alt="Marmara Ziraat" 
-                                          width={16} 
+                                        <Image
+                                          src="/logo.webp"
+                                          alt="Marmara Ziraat"
+                                          width={16}
                                           height={16}
                                           className="rounded-full object-cover"
                                         />
@@ -495,10 +504,10 @@ export default function FloatingAIChat() {
                                     </>
                                   ) : (
                                     <div className="w-full h-full bg-white border-2 border-green-500 flex items-center justify-center overflow-hidden rounded-full">
-                                      <Image 
-                                        src="/logo.webp" 
-                                        alt="Marmara Ziraat" 
-                                        width={16} 
+                                      <Image
+                                        src="/logo.webp"
+                                        alt="Marmara Ziraat"
+                                        width={16}
                                         height={16}
                                         className="rounded-full object-cover"
                                       />
@@ -515,7 +524,7 @@ export default function FloatingAIChat() {
                                 </div>
                                 <ExternalLink className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-green-500 flex-shrink-0 mt-0.5 sm:mt-1" />
                               </div>
-                            </Link>
+                            </button>
                         ))}
                       </div>
                     )}
@@ -650,7 +659,17 @@ export default function FloatingAIChat() {
             </div>
           </CardContent>
         )}
+
+        {/* Ürün Detay Diyaloğu */}
+        {selectedProduct && (
+          <ProductDetailDialog
+            open={productDialogOpen}
+            onOpenChange={setProductDialogOpen}
+            product={selectedProduct}
+            onProductChange={(p) => setSelectedProduct(p)}
+          />
+        )}
       </Card>
     </div>
   );
-} 
+}

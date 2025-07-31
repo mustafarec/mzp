@@ -297,15 +297,24 @@ export default function CatalogsPage() {
                     <Eye className="mr-1 h-3 w-3" />
                     Görüntüle
                   </Button>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     size="sm"
                     className="px-1 sm:px-2"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
                       const link = document.createElement('a');
-                      link.href = catalog.pdfUrl;
+                      const downloadUrl = catalog.pdfUrl.includes('firebasestorage.googleapis.com')
+                        ? `/api/pdf-proxy?url=${encodeURIComponent(catalog.pdfUrl)}`
+                        : catalog.pdfUrl;
+                      link.href = downloadUrl;
                       link.download = `${catalog.title}.pdf`;
+                      link.rel = 'noopener';
+                      link.target = '_self';
+                      document.body.appendChild(link);
                       link.click();
+                      document.body.removeChild(link);
                     }}
                   >
                     <Download className="h-3 w-3" />

@@ -33,7 +33,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClick }) =>
     <Card className="overflow-hidden h-full flex flex-col shadow-lg hover:shadow-xl transition-shadow duration-300">
       <CardHeader className="p-0">
         {featuredImage && (
-          <Link href={`/products/${product.slug}`} onClick={handleClick}>
+          <Link href={`/${product.slug}`} onClick={handleClick}>
             <div className="aspect-[4/3] relative w-full overflow-hidden">
               <Image
                 src={featuredImage}
@@ -51,8 +51,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClick }) =>
         {/* <Badge variant="secondary" className="mb-2">{product.category || product.categoryId}</Badge> */}
          <Badge variant="secondary" className="mb-2">{product.categoryId}</Badge> {/* TODO: Fetch category name */}
         <CardTitle className="text-lg mb-1 leading-tight">
-          <Link 
-            href={`/products/${product.slug}`} 
+          <Link
+            href={`/${product.slug}`}
             className="hover:text-primary transition-colors"
             onClick={handleClick}
           >
@@ -66,7 +66,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onProductClick }) =>
       </CardContent>
       <CardFooter className="p-4 border-t">
         <Button asChild variant="default" className="w-full">
-          <Link href={`/products/${product.slug}`} onClick={handleClick}>Detaylar</Link>
+          <Link href={`/${product.slug}`} onClick={handleClick}>Detaylar</Link>
         </Button>
       </CardFooter>
     </Card>
