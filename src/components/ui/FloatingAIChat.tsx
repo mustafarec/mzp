@@ -1,3 +1,4 @@
+// C:/Users/USER/OneDrive/Desktop/Projects/mzp/src/components/ui/FloatingAIChat.tsx
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
@@ -19,6 +20,7 @@ interface Message {
   timestamp: Date;
   products?: Product[];
   imageUrls?: string[];
+  suggestions?: string[];
 }
 
 const SYSTEM_PROMPT = `Sen Marmara Ziraat şirketinin uzman bahçe danışmanısın. Bu şirket:
@@ -48,14 +50,20 @@ export default function FloatingAIChat() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      content: 'Merhaba! Marmara Ziraat Bahçe Danışmanıyım 🌱 Size nasıl yardımcı olabilirim? \n\nBahçe sorunlarınızı, bitki hastalıklarınızı anlatın, size en uygun ürünleri önereyim. Çim tohumu, gübre, ilaç ve peyzaj ürünleri konularında uzman danışmanlık veriyorum.',
+      content: 'Merhaba! Ben Marmara Ziraat\'in dijital bahçe danışmanıyım 🌱 Size nasıl yardımcı olabilirim?',
       sender: 'ai',
-      timestamp: new Date()
+      timestamp: new Date(),
+      suggestions: [
+        "Çimlerim neden sararıyor?",
+        "Gül için gübre önerisi?",
+        "Resimdeki hastalık nedir?"
+      ]
     }
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // Ürün detay diyalogu state
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -328,6 +336,11 @@ export default function FloatingAIChat() {
     }
   };
 
+  const handleSuggestionClick = (suggestion: string) => {
+    setInputValue(suggestion);
+    inputRef.current?.focus();
+  };
+
   if (!isOpen) {
     return (
       <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50">
@@ -347,64 +360,67 @@ export default function FloatingAIChat() {
   }
 
   return (
-    <div className={`fixed bottom-0 right-0 sm:bottom-6 sm:right-6 z-50 transition-all duration-300 ${
-      isExpanded 
-        ? 'w-screen h-screen sm:w-[27.6rem] sm:h-auto max-w-screen sm:max-w-[27.6rem]' 
-        : 'w-screen h-screen sm:w-96 sm:h-auto max-w-screen sm:max-w-96'
+    <div className={`fixed inset-0 sm:inset-auto sm:top-20 sm:right-6 sm:bottom-6 z-50 transition-all duration-300 ${
+      isExpanded ? 'sm:w-[50vw]' : 'sm:w-[28rem]'
     }`}>
-      <Card className="shadow-2xl border-0 bg-white/95 backdrop-blur h-full sm:max-h-[600px] flex flex-col">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <div className="h-8 w-8 rounded-full bg-white border-2 border-green-500 flex items-center justify-center overflow-hidden">
+      <Card className="shadow-2xl border-0 bg-white/95 backdrop-blur h-full flex flex-col">
+        <CardHeader className="pb-4 border-b">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="relative flex-shrink-0">
                 <Image 
                   src="/logo.webp" 
                   alt="Marmara Ziraat" 
-                  width={24} 
-                  height={24}
-                  className="rounded-full object-cover"
+                  width={40} 
+                  height={40}
+                  className="rounded-full object-cover border-2 border-white shadow"
                 />
+                <span className="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full bg-green-500 ring-2 ring-white" title="Online"></span>
               </div>
               <div>
-                <CardTitle className="text-lg">Bahçe Danışmanı 🌱</CardTitle>
-                <div className="flex items-center space-x-1">
-                  <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
-                  <span className="text-xs text-muted-foreground">Uzman Danışmanlık</span>
-                </div>
+                <CardTitle className="text-base font-semibold">Bahçe Danışmanı</CardTitle>
+                <Badge variant="outline" className="mt-1 h-5 border-green-200 bg-green-50 text-green-700 text-[10px] font-normal">
+                  <Bot className="h-3 w-3 mr-1"/>
+                  AI Destekli
+                </Badge>
               </div>
             </div>
-            <div className="flex items-center space-x-1">
-              <button
+            <div className="flex items-center -mt-1">
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={handleExpand}
-                className="hidden sm:flex h-8 w-8 p-0 hover:bg-gray-100 rounded items-center justify-center"
+                className="hidden sm:flex h-8 w-8"
                 title={isExpanded ? "Küçült" : "Büyüt"}
               >
-                <Expand className="h-4 w-4" />
-              </button>
-              <button
+                <Expand className="h-4 w-4 text-muted-foreground" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={handleCloseChat}
-                className="h-8 w-8 p-0 hover:bg-gray-100 rounded flex items-center justify-center"
+                className="h-8 w-8"
               >
-                <X className="h-4 w-4" />
-              </button>
+                <X className="h-4 w-4 text-muted-foreground" />
+              </Button>
             </div>
           </div>
         </CardHeader>
 
         {!isMinimized && (
           <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
-            <div className="flex-1 overflow-y-auto p-3 pl-4 sm:p-4 space-y-3 sm:space-y-4 bg-gray-50/50 pb-4">
+            <div className="flex-1 overflow-y-auto p-3 pl-4 sm:p-4 space-y-4 bg-gray-50/50 pb-4">
               {messages.map((message) => (
                 <div
                   key={message.id}
-                  className={`flex items-start space-x-2 ${
+                  className={`flex items-start space-x-3 ${
                     message.sender === 'user' ? 'flex-row-reverse space-x-reverse' : ''
                   }`}
                 >
-                  <div className={`h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden ${
+                  <div className={`h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden shadow-sm ${
                     message.sender === 'user' 
-                      ? 'bg-blue-500' 
-                      : 'bg-white border-2 border-green-500'
+                      ? 'bg-blue-600' 
+                      : 'bg-white border border-green-300'
                   }`}>
                     {message.sender === 'user' ? (
                       <User className="h-4 w-4 text-white" />
@@ -412,30 +428,30 @@ export default function FloatingAIChat() {
                       <Image 
                         src="/logo.webp" 
                         alt="Marmara Ziraat" 
-                        width={20} 
-                        height={20}
-                        className="rounded-full object-cover"
+                        width={22} 
+                        height={22}
+                        className="rounded-full object-contain"
                       />
                     )}
                   </div>
                   <div className={`max-w-[85%] sm:max-w-[80%] ${
                     message.sender === 'user' ? 'ml-auto' : ''
                   }`}>
-                    <div className={`p-2 sm:p-3 rounded-lg text-sm sm:text-base ${
+                    <div className={`p-2.5 sm:p-3 rounded-xl text-sm ${
                       message.sender === 'user'
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-white border shadow-sm'
+                        ? 'bg-blue-600 text-white shadow'
+                        : 'bg-white border border-gray-200 shadow-sm'
                     }`}>
                       {message.sender === 'user' ? (
                         <div>
                           {message.imageUrls && message.imageUrls.length > 0 && (
-                            <div className="mb-2 flex flex-wrap gap-1">
+                            <div className="mb-2 flex flex-wrap gap-1.5">
                               {message.imageUrls.map((imageUrl, index) => (
                                 <img
                                   key={index}
                                   src={imageUrl}
                                   alt={`Gönderilen resim ${index + 1}`}
-                                  className="max-w-[100px] sm:max-w-[120px] max-h-[80px] sm:max-h-[100px] object-cover rounded border"
+                                  className="max-w-[100px] sm:max-w-[120px] max-h-[80px] sm:max-h-[100px] object-cover rounded-md border border-blue-400"
                                   onError={(e) => {
                                     const target = e.currentTarget;
                                     target.style.display = 'none';
@@ -444,17 +460,17 @@ export default function FloatingAIChat() {
                               ))}
                             </div>
                           )}
-                          <p className="text-xs sm:text-sm whitespace-pre-wrap">{message.content}</p>
+                          <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                         </div>
                       ) : (
                         <div 
-                          className="text-xs sm:text-sm prose prose-sm prose-green max-w-none [&_strong]:font-semibold [&_em]:italic [&_ul]:my-1 sm:[&_ul]:my-2 [&_li]:my-0.5 sm:[&_li]:my-1"
+                          className="text-sm text-gray-800 prose prose-sm max-w-none prose-p:my-2 prose-ul:my-2 prose-ul:pl-5 prose-li:my-1 prose-li:marker:text-green-600 prose-strong:font-semibold prose-strong:text-green-800"
                           dangerouslySetInnerHTML={{ 
                             __html: message.content
                           }}
                         />
                       )}
-                      <span className={`text-[10px] sm:text-xs mt-1 block ${
+                      <span className={`text-[10px] mt-1.5 block opacity-70 ${
                         message.sender === 'user' ? 'text-blue-100' : 'text-muted-foreground'
                       }`}>
                         {message.timestamp.toLocaleTimeString('tr-TR', { 
@@ -463,10 +479,26 @@ export default function FloatingAIChat() {
                         })}
                       </span>
                     </div>
+
+                    {message.sender === 'ai' && message.suggestions && message.suggestions.length > 0 && (
+                      <div className="mt-2.5 space-y-1">
+                          <div className="flex flex-wrap gap-1.5">
+                              {message.suggestions.map((suggestion, index) => (
+                                  <button
+                                      key={index}
+                                      onClick={() => handleSuggestionClick(suggestion)}
+                                      className="text-xs text-left bg-gray-100 border border-gray-200 rounded-full px-3 py-1.5 hover:bg-gray-200 transition-colors text-gray-700"
+                                  >
+                                      {suggestion}
+                                  </button>
+                              ))}
+                          </div>
+                      </div>
+                    )}
                     
                     {message.sender === 'ai' && message.products && message.products.length > 0 && (
-                      <div className="mt-2 space-y-1.5 sm:space-y-2">
-                        <p className="text-[10px] sm:text-xs text-green-600 font-medium">💡 Önerilen Ürünler:</p>
+                      <div className="mt-2.5 space-y-2">
+                        <p className="text-xs text-green-700 font-medium">💡 Önerilen Ürünler:</p>
                         {message.products.map((product) => (
                             <button
                               key={product.id}
@@ -475,10 +507,10 @@ export default function FloatingAIChat() {
                                 setSelectedProduct(product);
                                 setProductDialogOpen(true);
                               }}
-                              className="w-full text-left block bg-green-50 border border-green-200 rounded-lg p-1.5 sm:p-2 hover:bg-green-100 transition-colors"
+                              className="w-full text-left block bg-white border border-gray-200 rounded-lg p-2 hover:border-green-400 hover:bg-green-50/50 transition-all duration-200 shadow-sm"
                             >
-                              <div className="flex items-start space-x-2">
-                                <div className="h-8 w-8 rounded-full bg-white border-2 border-green-500 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                              <div className="flex items-center space-x-3">
+                                <div className="h-12 w-12 rounded-md bg-gray-100 border flex items-center justify-center flex-shrink-0 overflow-hidden">
                                   {product.images && product.images.length > 0 && product.images[0] ? (
                                     <>
                                       <img
@@ -492,37 +524,39 @@ export default function FloatingAIChat() {
                                           if (fallback) fallback.style.display = 'flex';
                                         }}
                                       />
-                                      <div className="absolute inset-0 bg-white border-2 border-green-500 hidden items-center justify-center overflow-hidden rounded-full">
+                                      <div className="absolute inset-0 bg-white hidden items-center justify-center overflow-hidden rounded-md">
                                         <Image
                                           src="/logo.webp"
                                           alt="Marmara Ziraat"
-                                          width={16}
-                                          height={16}
-                                          className="rounded-full object-cover"
+                                          width={24}
+                                          height={24}
+                                          className="object-contain"
                                         />
                                       </div>
                                     </>
                                   ) : (
-                                    <div className="w-full h-full bg-white border-2 border-green-500 flex items-center justify-center overflow-hidden rounded-full">
+                                    <div className="w-full h-full bg-white flex items-center justify-center overflow-hidden rounded-md">
                                       <Image
                                         src="/logo.webp"
                                         alt="Marmara Ziraat"
-                                        width={16}
-                                        height={16}
-                                        className="rounded-full object-cover"
+                                        width={24}
+                                        height={24}
+                                        className="object-contain"
                                       />
                                     </div>
                                   )}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <p className="text-[10px] sm:text-xs font-medium text-green-800 line-clamp-1">
+                                  <p className="text-xs font-semibold text-gray-800 line-clamp-1">
                                     {product.name}
                                   </p>
-                                  <p className="text-[9px] sm:text-xs text-green-600 line-clamp-1">
-                                    {product.description?.replace(/<[^>]*>/g, '').slice(0, 50)}...
+                                  <p className="text-[11px] text-gray-500 line-clamp-2 mt-0.5">
+                                    {product.description?.replace(/<[^>]*>/g, '').slice(0, 70)}...
                                   </p>
                                 </div>
-                                <ExternalLink className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-green-500 flex-shrink-0 mt-0.5 sm:mt-1" />
+                                <div className="flex items-center justify-center h-8 w-8 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
+                                  <ExternalLink className="w-4 h-4 text-gray-500" />
+                                </div>
                               </div>
                             </button>
                         ))}
@@ -533,18 +567,18 @@ export default function FloatingAIChat() {
               ))}
 
               {isLoading && (
-                <div className="flex items-start space-x-2">
-                  <div className="h-8 w-8 rounded-full bg-white border-2 border-green-500 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                <div className="flex items-start space-x-3">
+                  <div className="h-8 w-8 rounded-full bg-white border-2 border-green-300 flex items-center justify-center flex-shrink-0 overflow-hidden shadow-sm">
                     <Image 
                       src="/logo.webp" 
                       alt="Marmara Ziraat" 
-                      width={20} 
-                      height={20}
-                      className="rounded-full object-cover"
+                      width={22} 
+                      height={22}
+                      className="rounded-full object-contain"
                     />
                   </div>
-                  <div className="bg-white border shadow-sm p-3 rounded-lg">
-                    <div className="flex space-x-1">
+                  <div className="bg-white border shadow-sm p-3 rounded-xl">
+                    <div className="flex space-x-1.5">
                       <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
                       <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
                       <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
@@ -557,103 +591,97 @@ export default function FloatingAIChat() {
             </div>
 
             <div 
-              className={`border-t bg-white relative ${isDragOver ? 'bg-green-50 border-green-300' : ''} fixed inset-x-0 bottom-0 z-30 sm:relative sm:bottom-auto sm:left-auto sm:right-auto shadow-[0_-2px_16px_0_rgba(0,0,0,0.08)] p-3 sm:p-4`}
+              className={`border-t bg-white relative ${isDragOver ? 'bg-green-50' : ''} fixed inset-x-0 bottom-0 z-30 sm:relative sm:bottom-auto sm:left-auto sm:right-auto shadow-[0_-2px_16px_0_rgba(0,0,0,0.08)] p-2 sm:p-3`}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
-              style={{ 
-                paddingBottom: typeof window !== 'undefined' && window.visualViewport?.height ? 
-                  `${3 + (window.innerHeight - window.visualViewport.height)}px` : 
-                  '12px'
-              }}
             >
               {isDragOver && (
-                <div className="absolute inset-0 bg-green-100/80 border-2 border-dashed border-green-400 rounded-lg flex items-center justify-center z-10">
+                <div className="absolute inset-0 bg-green-100/80 border-2 border-dashed border-green-400 rounded-lg flex items-center justify-center z-10 m-2">
                   <div className="text-center">
                     <Paperclip className="mx-auto h-8 w-8 text-green-600 mb-2" />
-                    <p className="text-sm font-medium text-green-700">Resmi buraya bırakın</p>
+                    <p className="text-sm font-medium text-green-700">Resimleri buraya bırakın</p>
                   </div>
                 </div>
               )}
 
               {imagePreviews.length > 0 && (
-                <div className="mb-2 sm:mb-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs text-gray-600">
-                      {imagePreviews.length}/3 resim yüklendi
-                    </span>
-                    <button
-                      onClick={removeAllImages}
-                      className="text-xs text-red-500 hover:text-red-700"
-                    >
-                      Tümünü Sil
-                    </button>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {imagePreviews.map((preview, index) => (
-                      <div key={index} className="relative">
-                        <img 
-                          src={preview} 
-                          alt={`Yüklenen resim ${index + 1}`} 
-                          className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg border"
-                        />
-                        <button
-                          onClick={() => removeImage(index)}
-                          className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center hover:bg-red-600 touch-manipulation"
-                        >
-                          <X className="h-2 w-2 sm:h-2.5 sm:w-2.5" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              <div className="w-full max-w-2xl mx-auto">
-                <div className="flex items-end w-full">
-                  <div className="flex-1">
-                    <div className="flex items-center bg-gray-100 rounded-full px-3 py-2 shadow-inner focus-within:ring-3 focus-within:ring-green-400 focus-within:border-green-400 transition-all duration-200">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        onChange={handleImageSelect}
-                        className="hidden"
-                        id="image-upload"
-                        disabled={isLoading || selectedImages.length >= 3}
-                      />
-                      <label
-                        htmlFor="image-upload"
-                        className={`flex items-center justify-center rounded-full w-10 h-10 mr-3 transition-colors cursor-pointer relative ${selectedImages.length >= 3 ? 'bg-gray-300 text-gray-400 cursor-not-allowed' : 'bg-white hover:bg-green-100 text-green-600'}`}
-                        title={selectedImages.length >= 3 ? 'Maksimum 3 resim yükleyebilirsiniz' : `Fotoğraf yükle (${3 - selectedImages.length} kaldı)`}
-                      >
-                        <Paperclip className="h-5 w-5" />
-                        {selectedImages.length > 0 && (
-                          <span className="absolute -top-1 -right-1 bg-green-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center font-medium">
-                            {selectedImages.length}
-                          </span>
-                        )}
-                      </label>
-                      <Textarea
-                        value={inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
-                        onKeyPress={handleKeyPress}
-                        placeholder="Bahçe sorununuzu detaylı anlatın..."
-                        className="flex-1 bg-transparent border-none outline-none shadow-none resize-none text-sm px-0 py-2 focus:ring-0 focus:outline-none focus:border-none focus-visible:outline-none min-h-0 max-h-[80px] placeholder:text-gray-500"
-                        style={{ minHeight: 0, height: 44, maxHeight: 80, outline: 'none', boxShadow: 'none' }}
-                        disabled={isLoading}
-                        rows={1}
-                      />
+                <div className="px-2 pb-2">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs text-gray-600 font-medium">
+                        {imagePreviews.length}/3 resim
+                      </span>
                       <button
-                        onClick={sendMessage}
-                        disabled={(!inputValue.trim() && selectedImages.length === 0) || isLoading}
-                        className="ml-3 flex items-center justify-center rounded-full w-10 h-10 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white transition-colors shadow-md"
-                        aria-label="Gönder"
-                        type="button"
+                        onClick={removeAllImages}
+                        className="text-xs text-red-500 hover:underline"
                       >
-                        <Send className="h-5 w-5" />
+                        Tümünü Kaldır
                       </button>
                     </div>
-                  </div>
+                    <div className="flex flex-wrap gap-2">
+                      {imagePreviews.map((preview, index) => (
+                        <div key={index} className="relative group">
+                          <img 
+                            src={preview} 
+                            alt={`Yüklenen resim ${index + 1}`} 
+                            className="w-16 h-16 object-cover rounded-lg border-2 border-white shadow-md group-hover:opacity-80 transition-opacity"
+                          />
+                          <button
+                            onClick={() => removeImage(index)}
+                            className="absolute -top-1.5 -right-1.5 bg-gray-700 text-white rounded-full w-5 h-5 flex items-center justify-center hover:bg-red-500 transition-all scale-90 opacity-0 group-hover:scale-100 group-hover:opacity-100"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                </div>
+              )}
+              
+              <div className="relative flex items-end w-full">
+                <div className="flex-1 bg-gray-100 rounded-2xl flex items-end p-1.5 transition-all duration-200 focus-within:ring-2 focus-within:ring-green-500">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageSelect}
+                    className="hidden"
+                    id="image-upload"
+                    disabled={isLoading || selectedImages.length >= 3}
+                  />
+                  <label
+                    htmlFor="image-upload"
+                    className={`flex items-center justify-center rounded-full w-9 h-9 mr-1.5 transition-colors cursor-pointer flex-shrink-0 relative ${selectedImages.length >= 3 ? 'bg-gray-300 text-gray-400 cursor-not-allowed' : 'bg-white hover:bg-green-100 text-green-600'}`}
+                    title={selectedImages.length >= 3 ? 'Maksimum 3 resim yükleyebilirsiniz' : `Fotoğraf yükle (${3 - selectedImages.length} kaldı)`}
+                  >
+                    <Paperclip className="h-5 w-5" />
+                    {selectedImages.length > 0 && (
+                      <span className="absolute -top-0.5 -right-0.5 bg-green-500 text-white rounded-full w-4 h-4 text-[10px] flex items-center justify-center font-medium ring-2 ring-gray-100">
+                        {selectedImages.length}
+                      </span>
+                    )}
+                  </label>
+                  <Textarea
+                    ref={inputRef}
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="Sorunuzu yazın..."
+                    className="flex-1 bg-transparent border-none outline-none shadow-none resize-none text-sm px-2 py-2 focus:ring-0 focus:outline-none focus:border-none focus-visible:outline-none min-h-0 max-h-[120px] placeholder:text-gray-500"
+                    style={{ minHeight: '2.25rem' }} // Corresponds to h-9
+                    disabled={isLoading}
+                    rows={1}
+                  />
+                  <Button
+                    onClick={sendMessage}
+                    disabled={(!inputValue.trim() && selectedImages.length === 0) || isLoading}
+                    size="icon"
+                    className="ml-1.5 flex-shrink-0 w-9 h-9 rounded-full bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white transition-colors shadow-md"
+                    aria-label="Gönder"
+                    type="button"
+                  >
+                    <Send className="h-5 w-5" />
+                  </Button>
                 </div>
               </div>
             </div>

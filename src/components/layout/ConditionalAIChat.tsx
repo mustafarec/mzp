@@ -1,3 +1,4 @@
+// src/components/layout/ConditionalAIChat.tsx
 'use client';
 
 import { usePathname } from 'next/navigation';
@@ -12,4 +13,4 @@ export default function ConditionalAIChat() {
   }
   
   return <FloatingAIChat />;
-} 
+}

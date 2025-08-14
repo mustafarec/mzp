@@ -88,17 +88,16 @@ Bu konuşma geçmişini dikkate alarak, kullanıcının yeni sorusuna uygun ve t
   
   return `Sen Marmara Ziraat şirketinin uzman bahçe danışmanısın. Görevin:
 
-ÖNEMLİ: SADECE bahçe, bitki, tarım ve ziraat konularında yardım et!
-
-KURALLAR:
-1. Önce mesajın bahçe/bitki ile ilgili olup olmadığını değerlendir
-2. Eğer bahçe ile ilgili değilse nazik şekilde reddet ve alanını açıkla
-3. SADECE mevcut ürün kataloğundaki ürünleri öner
-4. Maksimum 3-4 ürün öner
-5. Bitki adlarını doğru kullan (ör: gül, çim, domates, menekşe)
-6. Türkçe konuş, kısa ve net yanıt ver
-7. Var olmayan ürün önerme
-8. Önceki konuşmalarda verdiğin tavsiyeleri hatırla ve tutarlı ol
+ÖNEMLİ KURALLAR:
+1.  **Uzmanlık Alanı:** SADECE bahçe, bitki, tarım ve ziraat konularında yardım et. Alakasız konularda nazikçe reddet ve uzmanlık alanını belirt.
+2.  **Ürün Önerisi:** YALNIZCA aşağıdaki "MEVCUT ÜRÜN KATALOĞU" listesindeki ürünleri öner. Asla var olmayan bir ürün önerme. Maksimum 3 ürün öner.
+3.  **Dil ve Üslup:** Türkçe, samimi ve anlaşılır bir dil kullan. Yanıtların kısa ve net olsun.
+4.  **Tutarlılık:** Önceki konuşmaları dikkate alarak tutarlı yanıtlar ver.
+5.  **HTML Formatlama:** Yanıtlarını zenginleştirmek için MUTLAKA HTML etiketleri kullan.
+    *   Önerdiğin her ürünün adını **tam olarak** katalogdaki gibi yaz ve **<strong>ÜRÜN ADI</strong>** şeklinde vurgula.
+    *   Başlıklar için \`<h4>Başlık</h4>\` kullan (örn: \`<h4>Sorun Analizi</h4>\`).
+    *   Listeler için \`<ul>\` ve \`<li>\` kullan.
+    *   Vurgu için \`<em>italik</em>\` ve \`</br>\` etiketlerini kullanabilirsin.
 
 MEVCUT ÜRÜN KATALOĞU:
 ${productList}${contextInfo}
@@ -107,13 +106,17 @@ Kullanıcı sorusuna uygun olan ürünleri yukarıdaki listeden seç ve öner. E
 📞 (0212) 672 99 56
 📧 info@marmaraziraat.com
 
-Yanıt formatı (HTML kullan):
-1. <strong>Sorun analizi</strong> (1-2 cümle)
-2. <strong>Önerilen ürünler</strong> (sadece mevcut kataloğdan)
-3. <strong>Uygulama önerileri</strong>
+ÖRNEK YANIT FORMATI:
+<h4>Sorun Analizi</h4>
+<p>Gözlemlerime göre bitkinizde ... belirtileri var. Bu durum genellikle ... kaynaklanır.</p>
 
-HTML etiketleri kullan: <strong>, <em>, <br>, <ul>, <li>
-Her önerdiğin ürünün adını tam olarak katalogdaki gibi yaz.`;
+<h4>Çözüm Önerileri</h4>
+<p>Bu sorunu çözmek için aşağıdaki adımları ve ürünleri tavsiye ederim:</p>
+<ul>
+  <li>Öncelikle, <strong>ÖRNEK ÜRÜN 1</strong> kullanarak toprağı zenginleştirin.</li>
+  <li>Ardından, <strong>ÖRNEK ÜRÜN 2</strong> ile bitkinizi düzenli olarak ilaçlayın.</li>
+</ul>
+<p>Daha fazla bilgi için bizimle iletişime geçebilirsiniz.</p>`;
 }
 
 async function convertImageToBase64(file: File): Promise<string> {
@@ -265,6 +268,56 @@ Bahçe ile ilgili sorularınız için bizimle iletişime geçebilirsiniz:<br>
         });
       }
     }
+    
+    // Konu dışı mesaj kontrolü
+    if (message && !imageBase64) {
+      const messageWords = message.toLowerCase().trim();
+      const simpleGreetings = [
+        'merhaba', 'selam', 'selamün aleyküm', 'naber', 'nasılsın', 
+        'hey', 'günaydın', 'iyi günler', 'iyi akşamlar', 'mrb', 'slm'
+      ];
+
+      // 1. Kısa ve alakasız selamlama mesajlarını yakala
+      if (simpleGreetings.includes(messageWords)) {
+        const friendlyGreeting = `Merhaba! Ben Marmara Ziraat'in dijital bahçe danışmanıyım. 🌱<br><br>Bitki sorunlarınız, ürün tavsiyeleri veya bahçe bakımı hakkında size nasıl yardımcı olabilirim?`;
+        return NextResponse.json({ 
+            message: friendlyGreeting,
+            timestamp: new Date().toISOString(),
+            rejected: true // Ön uçta yeni mesaj olarak eklenmemesi için
+        });
+      }
+
+      // 2. Bahçe ile ilgili anahtar kelime var mı diye kontrol et
+      const gardenKeywords = [
+        'bitki', 'çiçek', 'ağaç', 'çim', 'bahçe', 'tohum', 'gübre', 'ilaç', 'hastalık', 'böcek', 'haşere',
+        'yaprak', 'toprak', 'sulama', 'budama', 'peyzaj', 'meyve', 'sebze', 'tarım', 'ziraat', 'fide', 'fidan', 'zararlı',
+        'menekşe', 'gül', 'papatya', 'lale', 'karanfil', 'orkide', 'begonya', 'petunya', 'sümbül', 'nergis', 'sardunya', 'leylak', 'zambak', 'açelya', 'rododendron',
+        'soldu', 'kurudu', 'sarardı', 'solgun', 'hasta', 'çürük', 'sararma', 'kuruma', 'solma', 'çürüme', 'leke', 'kahverengi', 'beyazlaşma',
+        'saksı', 'çimlendirme', 'ekim', 'dikim', 'çapa', 'kürek', 'hortum', 'sprinkler', 'sera', 'kompost', 'mulç',
+        'akar', 'thrips', 'yaprak biti', 'mantar', 'küf', 'mildiyö', 'pas hastalığı', 'trip', 'beyaz sinek', 'kırmızı örümcek'
+      ];
+      const hasGardenKeyword = gardenKeywords.some(keyword => messageWords.includes(keyword));
+
+      // 3. Bahçe anahtar kelimesi yoksa, açıkça konu dışı mı diye kontrol et
+      if (!hasGardenKeyword) {
+        const clearlyOffTopicKeywords = [
+          'kimsin', 'adın ne', 'kaç yaşında', 'nerelisin', 'sen kimsin',
+          'telefon', 'araba', 'film', 'müzik', 'spor', 'politika', 'hava durumu',
+          'yemek', 'tarif', 'kıyafet', 'teknoloji', 'bilgisayar', 'oyun', 'döviz', 'borsa', 'fatura', 'sipariş', 'kargo'
+        ];
+        
+        const hasOffTopicKeyword = clearlyOffTopicKeywords.some(keyword => messageWords.includes(keyword));
+        
+        if (hasOffTopicKeyword) {
+          const rejectionMessage = `<strong>Merhaba!</strong> Ben Marmara Ziraat'in bahçe danışmanıyım. 🌱<br><br>Size <strong>bahçe ürünleri</strong>, <strong>bitki hastalıkları</strong>, <strong>gübre</strong> ve <strong>peyzaj</strong> konularında yardımcı olabilirim. Farklı bir konuda uzmanlığım bulunmuyor.<br><br>Bahçenizle ilgili sorularınızı bekliyorum.`;
+          return NextResponse.json({ 
+            message: rejectionMessage,
+            timestamp: new Date().toISOString(),
+            rejected: true
+          });
+        }
+      }
+    }
 
     const products = await getAllActiveProducts();
     const systemPrompt = createSystemPrompt(products, conversationHistory);
@@ -310,71 +363,6 @@ Bahçe ile ilgili sorularınız için bizimle iletişime geçebilirsiniz:<br>
     }
     
     if (message) {
-      // Text mesajları için genişletilmiş konu kontrolü
-      const gardenKeywords = [
-        // Genel bahçe terimleri
-        'bitki', 'çiçek', 'ağaç', 'çim', 'bahçe', 'tohum', 'gübre', 'ilaç', 'hastalık', 'böcek', 
-        'yaprak', 'toprak', 'sulama', 'budama', 'peyzaj', 'meyve', 'sebze', 'tarım', 'ziraat',
-        
-        // Çiçek ve bitki isimleri
-        'menekşe', 'gül', 'papatya', 'lale', 'karanfil', 'orkide', 'begonyal', 'petunya', 
-        'sümbül', 'nergis', 'sardunya', 'leylak', 'zambak', 'açelya', 'rododenron',
-        
-        // Durum ve problem kelimeleri
-        'soldu', 'kurudu', 'sarardı', 'solgun', 'hasta', 'çürük', 'sararma', 'kuruma',
-        'solma', 'hastalık', 'çürüme', 'leke', 'kahverengi', 'beyazlaşma',
-        
-        // Bahçe araçları ve malzemeleri
-        'saksı', 'çimlendirme', 'ekim', 'dikim', 'fide', 'fidan', 'çapa', 'kürek',
-        'hortum', 'sprinkler', 'sera', 'kompost', 'mulç',
-        
-        // Zararlı ve hastalıklar
-        'akar', 'thrips', 'yaprak biti', 'mantar', 'küf', 'mildiyö', 'pas hastalığı',
-        'trip', 'beyaz sinek', 'kırmızı örümcek'
-      ];
-      const messageWords = message.toLowerCase();
-      const hasGardenKeyword = gardenKeywords.some(keyword => messageWords.includes(keyword));
-      
-      // Eğer resim yoksa ve bahçe ile ilgili anahtar kelime yoksa, sadece açıkça alakasız mesajları reddet
-      if (!imageBase64 && !hasGardenKeyword && message.length > 10) {
-        // Çok açık şekilde alakasız konuları kontrol et
-        const clearlyOffTopicKeywords = [
-          'merhaba', 'selam', 'nasılsın', 'kim', 'adın ne', 'kaç yaşında', 'nereli',
-          'telefon', 'araba', 'film', 'müzik', 'spor', 'politik', 'hava durumu',
-          'yemek', 'tarif', 'kıyafet', 'teknoloji', 'bilgisayar', 'oyun'
-        ];
-        
-        const hasOffTopicKeyword = clearlyOffTopicKeywords.some(keyword => 
-          messageWords.includes(keyword)
-        );
-        
-        // Sadece açıkça alakasız konularda otomatik mesaj gönder
-        if (hasOffTopicKeyword) {
-          const rejectionMessage = `<strong>Merhaba!</strong> Ben Marmara Ziraat'in bahçe danışmanıyım. 🌱<br><br>
-
-Size <strong>bahçe ürünleri</strong>, <strong>bitki hastalıkları</strong>, <strong>gübre</strong>, <strong>tohum</strong> ve <strong>peyzaj</strong> konularında yardımcı olabilirim.<br><br>
-
-<strong>Yardımcı olabileceğim konular:</strong>
-<ul>
-<li>🌱 Bitki hastalıkları ve tedavi yöntemleri</li>
-<li>🌿 Gübre ve beslenme sorunları</li>
-<li>🌾 Çim ve tohum problemleri</li>
-<li>🌸 Bahçe düzenlemesi ve peyzaj</li>
-<li>🐛 Zararlı kontrolü ve ilaçlama</li>
-</ul>
-
-Bahçe ile ilgili sorularınız için bizimle iletişime geçebilirsiniz:<br>
-📞 <strong>(0212) 672 99 56</strong><br>
-📧 <strong>info@marmaraziraat.com</strong>`;
-
-          return NextResponse.json({ 
-            message: rejectionMessage,
-            timestamp: new Date().toISOString(),
-            rejected: true
-          });
-        }
-      }
-      
       const hasImages = parts.some(part => part.inline_data);
       const prompt = hasImages 
         ? `${systemPrompt}\n\nKullanıcı ${parts.filter(p => p.inline_data).length} resim gönderdi ve şunu soruyor: ${message}\n\nResimlerdeki bitki/bahçe sorunları hakkında analiz yap ve uygun ürün öner.`
