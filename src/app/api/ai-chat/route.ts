@@ -1,3 +1,4 @@
+// src/app/api/ai-chat/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, Timestamp, getDocs, query, where } from 'firebase/firestore';
@@ -6,18 +7,39 @@ import type { Product } from '@/types';
 const GOOGLE_AI_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_AI_API_KEY;
 const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 
+// In-memory cache for products
+let productCache: {
+  data: Product[];
+  timestamp: number;
+} | null = null;
+
+const CACHE_DURATION = 10 * 60 * 1000; // 10 minutes
+
 async function getAllActiveProducts(): Promise<Product[]> {
+  const now = Date.now();
+  if (productCache && now - productCache.timestamp < CACHE_DURATION) {
+    return productCache.data;
+  }
+  
   try {
     const snapshot = await getDocs(
       query(collection(db, 'products'), where('isActive', '==', true))
     );
     
-    return snapshot.docs.map(doc => ({
+    const products = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
       createdAt: doc.data().createdAt?.toDate() || new Date(),
       updatedAt: doc.data().updatedAt?.toDate() || new Date()
     })) as Product[];
+    
+    // Update cache
+    productCache = {
+      data: products,
+      timestamp: now,
+    };
+    
+    return products;
   } catch (error) {
     console.error('Ürünler getirme hatası:', error);
     return [];
@@ -445,4 +467,4 @@ Bahçe ürünleri ve peyzaj malzemeleri konusunda size yardımcı olmak için l�
       fallback: true
     });
   }
-} 
+}

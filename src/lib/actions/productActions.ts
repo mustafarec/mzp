@@ -1,8 +1,9 @@
+// src/lib/actions/productActions.ts
 "use server";
 
 import { z } from "zod";
 import { db } from "@/lib/firebase";
-import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs, getDoc, query, orderBy, where, serverTimestamp, limit, Timestamp } from "firebase/firestore";
+import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs, getDoc, query, orderBy, where, serverTimestamp, limit, Timestamp, WhereFilterOp } from "firebase/firestore";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { Product, ProductFeature, ProductSpecificationGroup, ProductImage, ProductDocument, AddProductFormData } from "@/types";
@@ -236,6 +237,91 @@ export async function getAllProducts(): Promise<Product[]> {
     return [];
   }
 }
+
+
+interface FilteredProductsResult {
+  products: Product[];
+  totalCount: number;
+}
+
+export async function getFilteredProducts({
+  searchTerm = '',
+  categoryIds = [],
+  sortBy = 'premium',
+  page = 1,
+  itemsPerPage = 24
+}: {
+  searchTerm?: string;
+  categoryIds?: string[];
+  sortBy?: string;
+  page?: number;
+  itemsPerPage?: number;
+}): Promise<FilteredProductsResult> {
+  try {
+    const productsRef = collection(db, 'products');
+    let q = query(productsRef, where('isActive', '==', true));
+
+    // Apply category filter if provided
+    if (categoryIds && categoryIds.length > 0) {
+      q = query(q, where('categoryId', 'in', categoryIds));
+    }
+
+    const querySnapshot = await getDocs(q);
+    
+    let allMatchingProducts = querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate ? data.createdAt.toDate() : new Date(data.createdAt),
+        updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : new Date(data.updatedAt)
+      };
+    }) as Product[];
+
+    // Apply search term filter on the server
+    if (searchTerm) {
+      const lowercasedTerm = searchTerm.toLowerCase();
+      allMatchingProducts = allMatchingProducts.filter(product =>
+        product.name.toLowerCase().includes(lowercasedTerm) ||
+        product.description.toLowerCase().includes(lowercasedTerm) ||
+        product.tags?.some(tag => tag.toLowerCase().includes(lowercasedTerm))
+      );
+    }
+    
+    const totalCount = allMatchingProducts.length;
+
+    // Apply sorting on the server
+    switch (sortBy) {
+      case 'premium':
+        allMatchingProducts.sort((a, b) => {
+          if (a.isPremium && !b.isPremium) return -1;
+          if (!a.isPremium && b.isPremium) return 1;
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        });
+        break;
+      case 'newest':
+        allMatchingProducts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        break;
+      case 'oldest':
+        allMatchingProducts.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+        break;
+      case 'name':
+        allMatchingProducts.sort((a, b) => a.name.localeCompare(b.name, 'tr'));
+        break;
+    }
+    
+    // Apply pagination
+    const startIndex = (page - 1) * itemsPerPage;
+    const paginatedProducts = allMatchingProducts.slice(startIndex, startIndex + itemsPerPage);
+
+    return { products: paginatedProducts, totalCount };
+
+  } catch (error) {
+    console.error('Filtered products fetch error:', error);
+    return { products: [], totalCount: 0 };
+  }
+}
+
 
 export async function getProductById(id: string): Promise<Product | null> {
   try {
